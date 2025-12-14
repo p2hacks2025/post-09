@@ -6,24 +6,20 @@ import 'package:pedometer/pedometer.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-const bool kUseEmulator = false; // エミュレータ使用時は true に変更
-
-const String kHostForDevice = '10.124.56.79'; //本体IPアドレス
 
 String get baseUrl {
-  if (kUseEmulator) {
-    // Android Emulator → ホストPCは 10.0.2.2 固定
-    return 'http://10.0.2.2:8000';
-  } else {
-    // 実機 → MacのLAN側IP
-    return 'http://$kHostForDevice:8000';
-  }
+  final raw = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
+  return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
 }
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
