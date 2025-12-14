@@ -1,9 +1,10 @@
+# app/main.py
 from fastapi import FastAPI
 
 from app.api.api import api_router
 from app.db.base_class import Base
 from app.db.session import engine
-from app.models import test_item
+from app.models import User
 
 app = FastAPI()
 
