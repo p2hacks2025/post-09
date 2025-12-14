@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
+import 'package:permission_handler/permission_handler.dart';
 
-const bool kUseEmulator = true;
+const bool kUseEmulator = false; // エミュレータ使用時は true に変更
 
-const String kHostForDevice = '172.20.10.9';
+const String kHostForDevice = '10.124.56.79'; //本体IPアドレス
 
 String get baseUrl {
   if (kUseEmulator) {
@@ -64,7 +65,7 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
   @override
   void initState() {
     super.initState();
-    _startPedometer();
+    _requestPedometerPermission();
     _getCurrentLocation();
   }
 
@@ -74,10 +75,24 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
     super.dispose();
   }
 
+  // 歩数の権限をリクエスト
+  Future<void> _requestPedometerPermission() async {
+    final status = await Permission.activityRecognition.request();
+
+    if (status.isGranted) {
+      _startPedometer();
+    } else if (status.isDenied) {
+      debugPrint('歩数カウント権限が拒否されました');
+    } else if (status.isPermanentlyDenied) {
+      debugPrint('歩数カウント権限が永続的に拒否されました。設定から許可してください。');
+      openAppSettings();
+    }
+  }
+
   // 歩数ストリームの購読
   void _startPedometer() {
     _stepSub = Pedometer.stepCountStream.listen(
-          (StepCount event) {
+      (StepCount event) {
         setState(() {
           _currentSteps = event.steps; // 端末が返す累積歩数（多くは起動 or 再起動から）
         });
@@ -137,7 +152,7 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
     }
   }
 
-    // FastAPI のテスト用エンドポイントを叩く
+  // FastAPI のテスト用エンドポイントを叩く
   Future<void> _callTestApi() async {
     setState(() {
       _isCallingApi = true;
@@ -154,7 +169,8 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
         // JSON なら decode して message を拾う
         try {
           final decoded = jsonDecode(body);
-          if (decoded is Map<String, dynamic> && decoded.containsKey('message')) {
+          if (decoded is Map<String, dynamic> &&
+              decoded.containsKey('message')) {
             setState(() {
               _apiMessage = decoded['message']?.toString();
             });
@@ -187,24 +203,21 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    final stepsText =
-    _currentSteps != null ? _currentSteps.toString() : '取得中…';
+    final stepsText = _currentSteps != null ? _currentSteps.toString() : '取得中…';
 
     String locationText;
     if (_locationError != null) {
       locationText = _locationError!;
     } else if (_currentPosition != null) {
       locationText =
-      'lat: ${_currentPosition!.latitude.toStringAsFixed(6)},\n'
+          'lat: ${_currentPosition!.latitude.toStringAsFixed(6)},\n'
           'lng: ${_currentPosition!.longitude.toStringAsFixed(6)}';
     } else {
       locationText = '取得中…';
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('歩数 & GPS デモ'),
-      ),
+      appBar: AppBar(title: const Text('歩数 & GPS デモ')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -215,10 +228,7 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
                 '現在の歩数（端末依存）',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              Text(
-                stepsText,
-                style: const TextStyle(fontSize: 32),
-              ),
+              Text(stepsText, style: const TextStyle(fontSize: 32)),
               const SizedBox(height: 32),
               const Text(
                 '現在地（GPS）',
@@ -234,7 +244,7 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
                 onPressed: _getCurrentLocation,
                 child: const Text('現在地を再取得'),
               ),
-                            const SizedBox(height: 32),
+              const SizedBox(height: 32),
               const Text(
                 'FastAPI との通信テスト',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -248,10 +258,7 @@ class _StepAndLocationPageState extends State<StepAndLocationPage> {
               if (_isCallingApi)
                 const Text('通信中...')
               else if (_apiError != null)
-                Text(
-                  _apiError!,
-                  style: const TextStyle(color: Colors.red),
-                )
+                Text(_apiError!, style: const TextStyle(color: Colors.red))
               else if (_apiMessage != null)
                 Text('レスポンス: $_apiMessage'),
             ],
