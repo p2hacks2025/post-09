@@ -22,6 +22,8 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+psycopg2://myuser:mypassword@db:5432/mydb
+      LOG_LEVEL: INFO
+      SQL_LOG_LEVEL: WARNING
     ports:
       - "8000:8000"
     volumes:
