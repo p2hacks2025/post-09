@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 
-// ユーザー登録画面
+// ユーザー登録画面のデモページ
+
 class UserRegistrationScreen extends StatefulWidget {
   const UserRegistrationScreen({super.key});
 

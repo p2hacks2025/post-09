@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/user.dart';
 
-//ユーザー照会画面
+//ユーザー照会画面のデモページ
 class UserLookupScreen extends StatefulWidget {
   const UserLookupScreen({super.key});
 

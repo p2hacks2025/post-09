@@ -1,13 +1,12 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
-
 import 'user_lookup_screen.dart';
 import 'user_registration_screen.dart';
 
+// 歩数 & 位置情報取得のデモページ
 class StepAndLocationPage extends StatefulWidget {
   const StepAndLocationPage({super.key});
 
