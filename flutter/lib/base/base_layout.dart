@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/home_screen.dart';
 
 // 全画面共通のベースレイアウト
 class BaseLayout extends StatelessWidget {
@@ -119,41 +120,23 @@ class BaseLayout extends StatelessWidget {
 
             const Spacer(),
 
-            // ハンバーガーメニュー（白背景・黒色）
-            Container(
+            // 設定アイコン（背景なし）
+            SizedBox(
               width: iconSize,
               height: iconSize,
-              decoration: const BoxDecoration(color: Colors.white),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                  horizontal: iconSize * 0.18,
-                  vertical: iconSize * 0.18,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      height: iconSize * 0.12,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Container(
-                      height: iconSize * 0.12,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    Container(
-                      height: iconSize * 0.12,
-                      decoration: BoxDecoration(
-                        color: Colors.black,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ],
+              child: Center(
+                child: Image.asset(
+                  'assets/images/icon_setting.png',
+                  width: iconSize * 0.8,
+                  height: iconSize * 0.8,
+                  color: Colors.black,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.settings,
+                      color: Colors.black,
+                      size: iconSize * 0.8,
+                    );
+                  },
                 ),
               ),
             ),
@@ -166,41 +149,82 @@ class BaseLayout extends StatelessWidget {
   Widget _buildBottomNavigation(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final navHeight = screenHeight * 0.09;
+    const iconAssets = [
+      'assets/images/icon_home.png',
+      'assets/images/icon_map.png',
+      'assets/images/icon_step.png',
+      'assets/images/icon_prof.png',
+    ];
 
     return Container(
       height: navHeight,
       color: const Color(0xFFB0B4CF),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(4, (index) => _buildNavItem(context)),
+        children: iconAssets
+            .map((assetPath) => _buildNavItem(context, assetPath))
+            .toList(),
       ),
     );
   }
 
-  Widget _buildNavItem(BuildContext context) {
+  Widget _buildNavItem(BuildContext context, String assetPath) {
     final screenWidth = MediaQuery.of(context).size.width;
     final iconSize = screenWidth * 0.12;
+    const iconColor = Colors.black; // 全アイコンを濃いトーンで統一
+    final isMapIcon = assetPath.contains('icon_map');
+    final isHomeIcon = assetPath.contains('icon_home');
 
-    return Container(
-      width: iconSize,
-      height: iconSize,
-      decoration: const BoxDecoration(
-        color: Color(0xFFB0B4CF),
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: Image.asset(
-          'assets/images/icon_prof.png',
-          width: iconSize * 0.6,
-          height: iconSize * 0.6,
-          color: Colors.black,
-          errorBuilder: (context, error, stackTrace) {
-            return Icon(
-              Icons.person,
-              color: Colors.black,
-              size: iconSize * 0.6,
-            );
-          },
+    return GestureDetector(
+      onTap: () {
+        if (isHomeIcon) {
+          // ホーム画面に遷移（スタックをクリアして新しくプッシュ）
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+            (route) => false,
+          );
+        }
+      },
+      child: Container(
+        width: iconSize,
+        height: iconSize,
+        decoration: const BoxDecoration(
+          color: Color(0xFFB0B4CF),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: isMapIcon
+              ? ShaderMask(
+                  shaderCallback: (bounds) => const LinearGradient(
+                    colors: [Colors.black, Colors.black],
+                  ).createShader(bounds),
+                  blendMode: BlendMode.srcATop,
+                  child: Image.asset(
+                    assetPath,
+                    width: iconSize * 0.76,
+                    height: iconSize * 0.76,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.map,
+                        color: iconColor,
+                        size: iconSize * 0.76,
+                      );
+                    },
+                  ),
+                )
+              : Image.asset(
+                  assetPath,
+                  width: iconSize * 0.72,
+                  height: iconSize * 0.72,
+                  color: iconColor,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Icon(
+                      Icons.person,
+                      color: iconColor,
+                      size: iconSize * 0.72,
+                    );
+                  },
+                ),
         ),
       ),
     );
