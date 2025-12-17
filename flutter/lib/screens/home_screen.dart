@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:pedometer/pedometer.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../base/base_layout.dart';
 import '../base/map_base.dart';
 import 'map_screen.dart';
+import 'symbol_monitor_screen.dart';
+import 'symbol_pin_screen.dart';
 
 // 実際のホーム画面
 class HomeScreen extends StatefulWidget {
@@ -16,53 +16,33 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  StreamSubscription<StepCount>? _stepSub;
-  int? _currentSteps;
-
   // 位置情報
   Position? _currentPosition;
   bool _isLoadingLocation = true;
+  String? _locationError;
 
   @override
   void initState() {
     super.initState();
-    _requestPedometerPermission();
     _getCurrentLocation();
-  }
-
-  @override
-  void dispose() {
-    _stepSub?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _requestPedometerPermission() async {
-    final status = await Permission.activityRecognition.request();
-    if (status.isGranted) {
-      _startPedometer();
-    }
-  }
-
-  void _startPedometer() {
-    _stepSub = Pedometer.stepCountStream.listen(
-      (event) {
-        setState(() {
-          _currentSteps = event.steps;
-        });
-      },
-      onError: (error) {
-        debugPrint('Pedometer error: $error');
-      },
-    );
   }
 
   // 位置情報の取得
   Future<void> _getCurrentLocation() async {
     setState(() {
+      _locationError = null;
       _isLoadingLocation = true;
     });
 
     final pos = await MapBase.getCurrentPosition();
+
+    if (pos == null) {
+      setState(() {
+        _locationError = '位置情報の取得に失敗しました。設定を確認してください。';
+        _isLoadingLocation = false;
+      });
+      return;
+    }
 
     setState(() {
       _currentPosition = pos;
@@ -77,7 +57,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return BaseLayout(
       showBackButton: false,
-      stepCount: _currentSteps,
       child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
@@ -110,21 +89,29 @@ class _HomeScreenState extends State<HomeScreen> {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
-    return Container(
-      width: double.infinity,
-      height: screenHeight * 0.35,
-      decoration: BoxDecoration(
-        color: const Color(0xFFD4D4D4),
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Center(
-        child: Text(
-          'シンボル',
-          style: TextStyle(
-            fontSize: screenWidth * 0.09,
-            fontWeight: FontWeight.w500,
-            color: const Color(0xFF1A1851),
-            letterSpacing: 4,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SymbolScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        height: screenHeight * 0.35,
+        decoration: BoxDecoration(
+          color: const Color(0xFFD4D4D4),
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Center(
+          child: Text(
+            'シンボル',
+            style: TextStyle(
+              fontSize: screenWidth * 0.09,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF1A1851),
+              letterSpacing: 4,
+            ),
           ),
         ),
       ),
@@ -138,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onTap: () {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const MapScreen()),
+          MaterialPageRoute(builder: (context) => const SymbolPinScreen()),
         );
       },
       child: Container(
@@ -154,6 +141,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: _isLoadingLocation
               ? const Center(
                   child: CircularProgressIndicator(color: Colors.white),
+                )
+              : _locationError != null
+              ? Center(
+                  child: Icon(
+                    Icons.location_off,
+                    color: Colors.white,
+                    size: 40,
+                  ),
                 )
               : _currentPosition != null
               ? Stack(

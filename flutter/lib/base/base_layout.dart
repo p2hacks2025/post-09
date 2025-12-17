@@ -1,20 +1,62 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../screens/home_screen.dart';
+import '../screens/map_screen.dart';
 
 // 全画面共通のベースレイアウト
-class BaseLayout extends StatelessWidget {
+class BaseLayout extends StatefulWidget {
   final Widget child; // メインコンテンツ
   final String? title; // タイトル（オプション）
   final bool showBackButton; // 戻るボタンを表示するか
-  final int? stepCount; // 歩数（オプション、指定すると左上に歩数表示）
 
   const BaseLayout({
     super.key,
     required this.child,
     this.title,
     this.showBackButton = true,
-    this.stepCount,
   });
+
+  @override
+  State<BaseLayout> createState() => _BaseLayoutState();
+}
+
+class _BaseLayoutState extends State<BaseLayout> {
+  StreamSubscription<StepCount>? _stepSub;
+  int? _currentSteps;
+
+  @override
+  void initState() {
+    super.initState();
+    _requestPedometerPermission();
+  }
+
+  @override
+  void dispose() {
+    _stepSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _requestPedometerPermission() async {
+    final status = await Permission.activityRecognition.request();
+    if (status.isGranted) {
+      _startPedometer();
+    }
+  }
+
+  void _startPedometer() {
+    _stepSub = Pedometer.stepCountStream.listen(
+      (event) {
+        setState(() {
+          _currentSteps = event.steps;
+        });
+      },
+      onError: (error) {
+        debugPrint('Pedometer error: $error');
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +74,7 @@ class BaseLayout extends StatelessWidget {
             ),
 
             // メインコンテンツ
-            Expanded(child: child),
+            Expanded(child: widget.child),
 
             // ボトムナビゲーション
             _buildBottomNavigation(context),
@@ -72,9 +114,9 @@ class BaseLayout extends StatelessWidget {
         child: Row(
           children: [
             // 左上のウィジェット（歩数表示または戻るボタン）
-            if (stepCount != null)
-              _buildStepCounter(context, stepCount!)
-            else if (showBackButton)
+            if (_currentSteps != null)
+              _buildStepCounter(context, _currentSteps!)
+            else if (widget.showBackButton)
               GestureDetector(
                 onTap: () {
                   Navigator.pop(context);
@@ -96,7 +138,7 @@ class BaseLayout extends StatelessWidget {
             const Spacer(),
 
             // タイトル（オプション）
-            if (title != null)
+            if (widget.title != null)
               Container(
                 padding: EdgeInsets.symmetric(
                   horizontal: iconSize * 0.5,
@@ -107,7 +149,7 @@ class BaseLayout extends StatelessWidget {
                   borderRadius: BorderRadius.circular(iconSize * 0.3),
                 ),
                 child: Text(
-                  title!,
+                  widget.title!,
                   style: TextStyle(
                     color: Colors.black,
                     fontSize: iconSize * 0.45,
@@ -183,6 +225,11 @@ class BaseLayout extends StatelessWidget {
             MaterialPageRoute(builder: (context) => const HomeScreen()),
             (route) => false,
           );
+        } else if (isMapIcon) {
+          // マップ画面に遷移
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const MapScreen()));
         }
       },
       child: Container(

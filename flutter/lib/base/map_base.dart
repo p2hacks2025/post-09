@@ -55,7 +55,7 @@ class MapBase {
     );
   }
 
-  /// 現在位置を示すマーカーを作成
+  /// 現在位置を示すマーカーを作成（デフォルトのピン）
   static Marker createCurrentLocationMarker(
     double latitude,
     double longitude, {
@@ -78,6 +78,32 @@ class MapBase {
     );
   }
 
+  /// 任意のアセット画像でマーカーを作成
+  static Marker createAssetMarker(
+    double latitude,
+    double longitude,
+    String assetPath, {
+    double width = 40,
+    double height = 40,
+    double imageSize = 28,
+    Alignment alignment = Alignment.center,
+  }) {
+    return Marker(
+      point: LatLng(latitude, longitude),
+      width: width,
+      height: height,
+      alignment: alignment,
+      child: Image.asset(
+        assetPath,
+        width: imageSize,
+        height: imageSize,
+        errorBuilder: (context, error, stackTrace) {
+          return const Icon(Icons.location_pin, color: Colors.red);
+        },
+      ),
+    );
+  }
+
   /// マップウィジェットを作成（基本設定）
   static Widget createMapWidget({
     required double latitude,
@@ -86,24 +112,32 @@ class MapBase {
     bool interactive = true,
     MapController? controller,
     List<Marker>? additionalMarkers,
+    bool includeCurrentMarker = true,
+    Function(dynamic, bool)? onPositionChanged,
   }) {
-    final markers = [
-      createCurrentLocationMarker(latitude, longitude),
+    final markers = <Marker>[
+      if (includeCurrentMarker)
+        createCurrentLocationMarker(latitude, longitude),
       if (additionalMarkers != null) ...additionalMarkers,
     ];
 
-    return FlutterMap(
-      mapController: controller,
-      options: MapOptions(
-        initialCenter: LatLng(latitude, longitude),
-        initialZoom: zoom,
-        interactionOptions: InteractionOptions(
-          flags: interactive ? InteractiveFlag.all : InteractiveFlag.none,
-        ),
-      ),
+    return Stack(
       children: [
-        createTileLayer(),
-        MarkerLayer(markers: markers),
+        FlutterMap(
+          mapController: controller,
+          options: MapOptions(
+            initialCenter: LatLng(latitude, longitude),
+            initialZoom: zoom,
+            interactionOptions: InteractionOptions(
+              flags: interactive ? InteractiveFlag.all : InteractiveFlag.none,
+            ),
+            onPositionChanged: onPositionChanged,
+          ),
+          children: [
+            createTileLayer(),
+            MarkerLayer(markers: markers),
+          ],
+        ),
       ],
     );
   }
