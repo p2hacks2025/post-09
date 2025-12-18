@@ -13,13 +13,19 @@ services:
       - "5432:5432" 
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d mydb"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
 
   backend:
     build: . 
     container_name: powers-app-backend
     restart: always
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgresql+psycopg2://myuser:mypassword@db:5432/mydb
       LOG_LEVEL: INFO
