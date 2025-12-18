@@ -1,7 +1,7 @@
 # app/models/step.py
 import uuid
 
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, UniqueConstraint, Index
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Boolean, DateTime, func, Index
 from sqlalchemy.orm import relationship
 
 from app.db.base_class import Base
@@ -39,11 +39,23 @@ class Step(Base):
         default=0,
     )
 
-    # 同一ユーザーと同一日付の重複を禁止
-    __table_args__ = (
-        UniqueConstraint("user_uuid", "date", name="uq_step_user_date"),
-        Index("ix_step_user_date", "user_uuid", "date"),
+    is_started = Column(
+        Boolean,
+        nullable=False,
+        default=False,
     )
+
+    created_at = Column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )
+
+    __table_args__ = (
+        Index("ix_step_user_date_created_at", "user_uuid", "date", "created_at"),
+    )
+
 
     # リレーション
     user = relationship("User", back_populates="steps")
