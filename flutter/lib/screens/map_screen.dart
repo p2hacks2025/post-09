@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../base/base_layout.dart';
@@ -19,7 +18,6 @@ class _MapScreenState extends State<MapScreen> {
   Position? _currentPosition;
   String? _locationError;
   bool _isLoadingLocation = true;
-  String? _address; // 住所情報
 
   final MapController _mapController = MapController();
 
@@ -33,31 +31,6 @@ class _MapScreenState extends State<MapScreen> {
   void dispose() {
     _mapController.dispose();
     super.dispose();
-  }
-
-  // 緯度経度から住所を取得
-  Future<void> _getAddressFromPosition(
-    double latitude,
-    double longitude,
-  ) async {
-    try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        latitude,
-        longitude,
-      );
-      if (placemarks.isNotEmpty) {
-        final place = placemarks[0];
-        setState(() {
-          _address =
-              '${place.country} ${place.administrativeArea} ${place.locality} ${place.street}';
-        });
-      }
-    } catch (e) {
-      debugPrint('住所取得エラー: $e');
-      setState(() {
-        _address = '住所の取得に失敗しました';
-      });
-    }
   }
 
   // 位置情報の取得
@@ -81,9 +54,6 @@ class _MapScreenState extends State<MapScreen> {
       _currentPosition = pos;
       _isLoadingLocation = false;
     });
-
-    // 住所を取得
-    await _getAddressFromPosition(pos.latitude, pos.longitude);
 
     // ウィジェット描画後にマップを移動
     WidgetsBinding.instance.addPostFrameCallback((_) {

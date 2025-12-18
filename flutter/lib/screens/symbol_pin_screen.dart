@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
 import '../base/base_layout.dart';
 import '../base/map_base.dart';
 import 'symbol_monitor_screen.dart';
@@ -18,7 +17,6 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
   Position? _currentPosition;
   String? _locationError;
   bool _isLoadingLocation = true;
-  LatLng? _selectedPosition;
   bool _showLabel = true;
 
   final MapController _mapController = MapController();
@@ -60,17 +58,8 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
 
     setState(() {
       _currentPosition = pos;
-      _selectedPosition = LatLng(pos.latitude, pos.longitude);
       _isLoadingLocation = false;
     });
-  }
-
-  void _onMapPositionChanged(dynamic pos, bool hasGesture) {
-    if (hasGesture && pos.center != null) {
-      setState(() {
-        _selectedPosition = pos.center as LatLng;
-      });
-    }
   }
 
   @override
@@ -115,7 +104,6 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                           controller: _mapController,
                           includeCurrentMarker: false,
                           additionalMarkers: const [],
-                          onPositionChanged: _onMapPositionChanged,
                         ),
                       ),
                       // 曇ったオーバーレイ（濃いグレーで曇ったイメージ、5秒後に消える）

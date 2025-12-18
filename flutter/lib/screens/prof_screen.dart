@@ -42,7 +42,7 @@ class _ProfScreenState extends State<ProfScreen> {
                         child: Text(
                           "Power's とがし",
                           style: TextStyle(
-                            color: const Color(0xFFF0F337),
+                            color: Color(0xFFF0F337),
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
                           ),
@@ -110,7 +110,11 @@ class _ProfScreenState extends State<ProfScreen> {
                       imageAlignment: Alignment(0, 0.2),
                     ),
                     SizedBox(height: screenHeight * 0.04),
-                    _buildSquareItem(context, '体重入力'),
+                    _buildSquareItem(
+                      context,
+                      '体重入力',
+                      assetPath: 'assets/images/icon_weight.png',
+                    ),
                     SizedBox(height: screenHeight * 0.04),
                     _buildSquareItem(context, '---'),
                   ],

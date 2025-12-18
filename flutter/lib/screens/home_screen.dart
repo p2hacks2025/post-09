@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../base/base_layout.dart';
 import '../base/map_base.dart';
-import 'map_screen.dart';
 import 'symbol_monitor_screen.dart';
 import 'symbol_pin_screen.dart';
 
@@ -104,14 +103,13 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(32),
         ),
         child: Center(
-          child: Text(
-            'シンボル',
-            style: TextStyle(
-              fontSize: screenWidth * 0.09,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF1A1851),
-              letterSpacing: 4,
-            ),
+          child: Image.asset(
+            'assets/images/symbol_1.png',
+            fit: BoxFit.contain,
+            width: screenWidth * 0.7,
+            errorBuilder: (context, error, stack) {
+              return const Text('symbol_1.png not found');
+            },
           ),
         ),
       ),

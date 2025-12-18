@@ -14,9 +14,6 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return BaseLayout(
       showBackButton: false,
       child: SingleChildScrollView(

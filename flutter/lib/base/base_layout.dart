@@ -12,12 +12,14 @@ class BaseLayout extends StatefulWidget {
   final Widget child; // メインコンテンツ
   final String? title; // タイトル（オプション）
   final bool showBackButton; // 戻るボタンを表示するか
+  final bool showTopStepCounter; // 上部の歩数表示を出すか
 
   const BaseLayout({
     super.key,
     required this.child,
     this.title,
     this.showBackButton = true,
+    this.showTopStepCounter = true,
   });
 
   @override
@@ -62,8 +64,6 @@ class _BaseLayoutState extends State<BaseLayout> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: const Color(0xFF1A1851), // ダークブルー背景
       body: SafeArea(
@@ -116,7 +116,7 @@ class _BaseLayoutState extends State<BaseLayout> {
         child: Row(
           children: [
             // 左上のウィジェット（歩数表示または戻るボタン）
-            if (_currentSteps != null)
+            if (widget.showTopStepCounter && _currentSteps != null)
               _buildStepCounter(context, _currentSteps!)
             else if (widget.showBackButton)
               GestureDetector(
