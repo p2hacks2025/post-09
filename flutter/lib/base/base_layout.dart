@@ -4,6 +4,7 @@ import 'package:pedometer/pedometer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../screens/home_screen.dart';
 import '../screens/map_screen.dart';
+import '../screens/step_total_screen.dart';
 
 // 全画面共通のベースレイアウト
 class BaseLayout extends StatefulWidget {
@@ -216,6 +217,7 @@ class _BaseLayoutState extends State<BaseLayout> {
     const iconColor = Colors.black; // 全アイコンを濃いトーンで統一
     final isMapIcon = assetPath.contains('icon_map');
     final isHomeIcon = assetPath.contains('icon_home');
+    final isStepIcon = assetPath.contains('icon_step');
 
     return GestureDetector(
       onTap: () {
@@ -230,6 +232,11 @@ class _BaseLayoutState extends State<BaseLayout> {
           Navigator.of(
             context,
           ).push(MaterialPageRoute(builder: (context) => const MapScreen()));
+        } else if (isStepIcon) {
+          // 足跡累計画面に遷移
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const StepTotalScreen()),
+          );
         }
       },
       child: Container(
