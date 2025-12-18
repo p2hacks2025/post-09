@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../screens/home_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/step_total_screen.dart';
+import '../screens/prof_screen.dart';
 
 // 全画面共通のベースレイアウト
 class BaseLayout extends StatefulWidget {
@@ -218,6 +219,7 @@ class _BaseLayoutState extends State<BaseLayout> {
     final isMapIcon = assetPath.contains('icon_map');
     final isHomeIcon = assetPath.contains('icon_home');
     final isStepIcon = assetPath.contains('icon_step');
+    final isProfIcon = assetPath.contains('icon_prof');
 
     return GestureDetector(
       onTap: () {
@@ -237,6 +239,11 @@ class _BaseLayoutState extends State<BaseLayout> {
           Navigator.of(context).push(
             MaterialPageRoute(builder: (context) => const StepTotalScreen()),
           );
+        } else if (isProfIcon) {
+          // プロフィール画面に遷移
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const ProfScreen()));
         }
       },
       child: Container(

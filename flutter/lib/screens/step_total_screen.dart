@@ -48,7 +48,7 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 300, maxHeight: 380),
       decoration: BoxDecoration(
-        color: const Color(0xFF7CC078), // 緑色
+        color: const Color(0xFF368855), // 緑色
         borderRadius: BorderRadius.circular(32),
       ),
       child: Column(
@@ -61,11 +61,11 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
             'assets/images/icon_step.png',
             width: 160,
             height: 160,
-            color: Colors.white, // 白色にする
+            color: const Color(0xFFF0F337), // 黄色にする
             errorBuilder: (context, error, stackTrace) {
               return const Icon(
                 Icons.directions_walk,
-                color: Colors.white,
+                color: Color(0xFFF0F337),
                 size: 160,
               );
             },
@@ -77,7 +77,7 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
           const Text(
             '今までの歩数',
             style: TextStyle(
-              color: Colors.white,
+              color: Color(0xFFF0F337),
               fontSize: 16,
               fontWeight: FontWeight.w500,
             ),
@@ -89,7 +89,7 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
           Text(
             '$_currentSteps歩',
             style: const TextStyle(
-              color: Colors.white,
+              color: Color(0xFFF0F337),
               fontSize: 48,
               fontWeight: FontWeight.bold,
             ),
