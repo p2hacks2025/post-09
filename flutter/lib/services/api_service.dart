@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/user.dart';
 
-//APIとの通信を行うサービス
+//APIとの通信を行うサービスのデモ版
 String get baseUrl {
   final raw = dotenv.env['API_BASE_URL'] ?? 'http://10.0.2.2:8000';
   return raw.endsWith('/') ? raw.substring(0, raw.length - 1) : raw;
