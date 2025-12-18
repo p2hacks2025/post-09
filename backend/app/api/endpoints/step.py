@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.schemas.step import StepCreate, StepUpdate, StepResponse
+from app.schemas.step import StepCreate, StepUpdate, StepResponse, DailyTotalStepsResponse, LatestSessionStepsResponse
 from app.crud.step import step_crud
 
 router = APIRouter()
@@ -98,7 +98,7 @@ def delete_step(*, db: Session = Depends(get_db), uuid: str):
     return deleted
 
 
-# （任意・便利）ユーザーの歩数履歴を取得
+# ユーザーの歩数履歴を取得
 @router.get(
     "/users/{user_uuid}/steps",
     response_model=List[StepResponse],
@@ -112,7 +112,7 @@ def read_steps_by_user(
     return steps
 
 
-# （任意・便利）ユーザー×日付の1件取得
+# ユーザー×日付の1件取得
 @router.get(
     "/users/{user_uuid}/steps/{target_date}",
     response_model=StepResponse,
@@ -127,3 +127,36 @@ def read_step_by_user_and_date(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Step not found")
     logging.info("[END] read_step_by_user_and_date")
     return step
+
+# 最新セッションの歩数取得
+@router.get(
+    "/users/{user_uuid}/steps/steps/session/latest",
+    response_model=LatestSessionStepsResponse,
+)
+def get_latest_session_steps(*, db: Session = Depends(get_db), user_uuid: str):
+    logging.info("[START] get_latest_session_steps")
+    try:
+        start_row, stop_row, diff = step_crud.calc_latest_session_steps(db, user_uuid=user_uuid)
+    except ValueError as e:
+        logging.error(f"get_latest_session_steps failed: {e}")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    logging.info("[END] get_latest_session_steps")
+    return LatestSessionStepsResponse(
+        user_uuid=user_uuid,
+        start_uuid=start_row.uuid,
+        stop_uuid=stop_row.uuid,
+        started_at=start_row.created_at,
+        stopped_at=stop_row.created_at,
+        steps=diff,
+    )
+
+# 日別合計歩数取得
+@router.get(
+    "/users/{user_uuid}/steps/daily-total/{target_date}",
+    response_model=DailyTotalStepsResponse,
+)
+def get_daily_total_steps(*, db: Session = Depends(get_db), user_uuid: str, target_date: date_type):
+    logging.info("[START] get_daily_total_steps")
+    total = step_crud.calc_daily_total_steps(db, user_uuid=user_uuid, target_date=target_date)
+    logging.info("[END] get_daily_total_steps")
+    return DailyTotalStepsResponse(user_uuid=user_uuid, date=target_date, total_steps=total)
