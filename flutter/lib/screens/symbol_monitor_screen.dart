@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../base/base_layout.dart';
+import '../base/base_kirakira.dart';
 import '../services/api_service.dart';
 import '../services/user_storage.dart';
 import '../models/step.dart';
@@ -15,12 +16,13 @@ class SymbolScreen extends StatefulWidget {
   State<SymbolScreen> createState() => _SymbolScreenState();
 }
 
-class _SymbolScreenState extends State<SymbolScreen> {
+class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
   StreamSubscription<StepCount>? _stepSub;
   int? _currentSteps; // デバイスの累積歩数
   bool _isMonitoring = false;
   int? _startSteps; // 計測開始時の累積歩数
   int _displaySteps = 0; // 画面に表示する歩数（計測中の差分）
+  Key _refreshKey = UniqueKey(); // リロード用のキー
 
   // SharedPreferencesのキー
   static const String _keyIsMonitoring = 'step_monitoring_active';
@@ -30,6 +32,7 @@ class _SymbolScreenState extends State<SymbolScreen> {
   void initState() {
     super.initState();
     _loadMonitoringState();
+    loadKirakiraLevel();
     _startPedometer();
   }
 
@@ -78,7 +81,6 @@ class _SymbolScreenState extends State<SymbolScreen> {
         });
       },
       onError: (error) {
-        debugPrint('Pedometer error: $error');
         setState(() {
           _currentSteps = null;
         });
@@ -101,39 +103,77 @@ class _SymbolScreenState extends State<SymbolScreen> {
             children: [
               const Spacer(),
 
-              // 上部の灰色ボックス
+              // シンボル表示エリア
               Container(
+                key: _refreshKey,
                 height: screenHeight * 0.6,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
                   borderRadius: BorderRadius.circular(32),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  child: Stack(
-                    children: [
-                      const Center(
-                        child: Text(
-                          'シンボル',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
+                clipBehavior: Clip.antiAlias,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // 背景画像
+                    Image.asset(
+                      'assets/images/symbol&back/back_lv$kirakiraLevel.png',
+                      fit: BoxFit.cover,
+                    ),
+                    // シンボル画像
+                    Padding(
+                      padding: const EdgeInsets.all(1),
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.all(1),
+                              child: Center(
+                                child: Image.asset(
+                                  'assets/images/symbol&back/symbol_lv$kirakiraLevel.png',
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                          _buildStepCounter(screenWidth),
+                          const SizedBox(height: 8),
+                        ],
+                      ),
+                    ),
+                    // リロードボタン（右上）
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            // ページを再読み込み（ページ自体を置き換え）
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SymbolScreen(),
+                              ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.rotate_left,
+                              color: Colors.black,
+                              size: 28,
+                            ),
                           ),
                         ),
                       ),
-                      Align(
-                        alignment: Alignment.bottomCenter,
-                        child: Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _buildStepCounter(screenWidth),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -222,6 +262,13 @@ class _SymbolScreenState extends State<SymbolScreen> {
       );
 
       await ApiService.createStep(request);
+
+      // ユーザーのシンボルを取得してキラキラレベルを更新
+      try {
+        await syncKirakiraLevelToServer(level: kirakiraLevel);
+      } catch (e) {
+        debugPrint('キラキラレベルの更新に失敗: $e');
+      }
 
       // 記録した歩数を保存
       await UserStorage.saveLastRecordedSteps(stepDifference);

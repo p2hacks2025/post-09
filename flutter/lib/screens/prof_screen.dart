@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../base/base_layout.dart';
+import '../base/base_kirakira.dart';
 import '../services/api_service.dart';
 import '../services/user_storage.dart';
 import '../models/user.dart';
@@ -12,7 +13,7 @@ class ProfScreen extends StatefulWidget {
   State<ProfScreen> createState() => _ProfScreenState();
 }
 
-class _ProfScreenState extends State<ProfScreen> {
+class _ProfScreenState extends State<ProfScreen> with KirakiraLevelMixin {
   User? _user;
   bool _isLoading = true;
   String? _error;
@@ -23,6 +24,7 @@ class _ProfScreenState extends State<ProfScreen> {
     super.initState();
     _loadUser();
     _loadTotalSteps();
+    loadKirakiraLevel();
   }
 
   Future<void> _loadUser() async {
@@ -194,7 +196,7 @@ class _ProfScreenState extends State<ProfScreen> {
             right: -screenWidth * 0.08,
             bottom: -screenWidth * 0.08,
             child: Image.asset(
-              'assets/images/symbol_1.png',
+              'assets/images/symbol&back/symbol_lv$kirakiraLevel.png',
               width: screenWidth * 0.4,
               height: screenWidth * 0.4,
               errorBuilder: (context, error, stackTrace) {
