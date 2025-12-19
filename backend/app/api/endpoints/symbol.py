@@ -1,6 +1,7 @@
 # app/api/endpoints/symbol.py
 import logging
 from typing import List
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -9,6 +10,7 @@ from app.api.deps import get_db
 from app.schemas.symbol import SymbolCreate, SymbolUpdate, SymbolResponse, UserSymbolsResponse
 from app.crud.symbol import symbol_crud
 from app.core.timezone import JST, jst_day_to_utc_range
+from app.core.config import DECAY_HOURS
 
 router = APIRouter()
 
@@ -95,3 +97,32 @@ def read_symbols_by_user(
     symbols = symbol_crud.get_multi_by_user(db, user_uuid=user_uuid, skip=skip, limit=limit)
     logging.info("[END] read_symbols_by_user")
     return UserSymbolsResponse(user_uuid=user_uuid, symbols=symbols)
+
+# 特定のシンボルの、キラキラレベルが減少するまでの残り時間（hours）を取得するエンドポイント
+@router.get(
+    "/symbols/{uuid}/kirakira_remaining_time",
+    response_model=int,
+)
+def get_kirakira_remaining_time(*, db: Session = Depends(get_db), uuid: str):
+    logging.info("[START] get_kirakira_remaining_time")
+    symbol = symbol_crud.get(db, uuid)
+    if symbol is None:
+        logging.error(f"Symbol with uuid {uuid} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Symbol not found")
+
+    if symbol.kirakira_level <= 0:
+        logging.info("[END] get_kirakira_remaining_time")
+        return 0  # キラキラレベルが0以下なら残り時間は0
+
+        # Python側で現在時刻を作る（UTC推奨）
+    now = datetime.now(timezone.utc)
+
+    updated_at = symbol.updated_at
+    # DBからnaive datetime（tz無し）が返る環境対策：UTC扱いで寄せる
+    if updated_at.tzinfo is None:
+        updated_at = updated_at.replace(tzinfo=timezone.utc)
+
+    elapsed_hours = (now - updated_at).total_seconds() / 3600.0
+    remaining = max(0, DECAY_HOURS - elapsed_hours)
+    logging.info("[END] get_kirakira_remaining_time")
+    return int(remaining)
