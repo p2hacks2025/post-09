@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../base/base_layout.dart';
 import '../services/user_storage.dart';
+import '../services/api_service.dart';
+import '../models/step.dart';
 import 'start_screen.dart';
 
 /// 設定画面
@@ -130,9 +132,43 @@ class _SettingScreenState extends State<SettingScreen> {
                     child: _buildPillButton(
                       context,
                       label: '伸ばす',
-                      onTap: () {
+                      onTap: () async {
                         debugPrint('期限を一週間伸ばすボタンが押されました');
-                        // TODO: 期限延長処理を実装
+
+                        try {
+                          // ユーザーUUIDを取得
+                          final userUuid = await UserStorage.getUserUuid();
+                          if (userUuid == null) {
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('ユーザーが登録されていません')),
+                              );
+                            }
+                            return;
+                          }
+
+                          // 1000歩を追加するステップレコードを作成
+                          final request = StepCreateRequest(
+                            userUuid: userUuid,
+                            step: 1000,
+                            isStarted: false,
+                            createdAt: DateTime.now(),
+                          );
+
+                          await ApiService.createStep(request);
+
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('累計歩数を+1000しました！')),
+                            );
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(
+                              context,
+                            ).showSnackBar(SnackBar(content: Text('エラー: $e')));
+                          }
+                        }
                       },
                     ),
                   ),
@@ -317,15 +353,15 @@ class _SettingScreenState extends State<SettingScreen> {
     debugPrint('Volume icon update: value=$value');
 
     if (value <= eps) {
-      return 'assets/images/icon_mute.png';
+      return 'assets/images/volume/icon_mute.png';
     } else if (value >= 1.0 - eps) {
-      return 'assets/images/icon_max.png';
+      return 'assets/images/volume/icon_max.png';
     } else if (value <= 0.50) {
       // 0.01〜0.50
-      return 'assets/images/icon_min.png';
+      return 'assets/images/volume/icon_min.png';
     } else {
       // 0.51〜0.99
-      return 'assets/images/icon_mid.png';
+      return 'assets/images/volume/icon_mid.png';
     }
   }
 

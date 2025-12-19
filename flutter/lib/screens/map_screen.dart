@@ -3,9 +3,10 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../base/base_layout.dart';
-import '../base/map_base.dart';
+import '../base/base_map.dart';
 import '../models/symbol.dart' as symbol_model;
 import '../services/api_service.dart';
+import '../services/user_storage.dart';
 
 // マップ画面
 class MapScreen extends StatefulWidget {
@@ -77,9 +78,23 @@ class _MapScreenState extends State<MapScreen> {
     });
 
     try {
-      final symbols = await ApiService.getSymbols(limit: 1000);
+      // ユーザーUUIDを取得
+      final userUuid = await UserStorage.getUserUuid();
+      if (userUuid == null) {
+        setState(() {
+          _symbols = [];
+          _isLoadingSymbols = false;
+        });
+        return;
+      }
+
+      // ユーザーのシンボル一覧を取得
+      final userSymbols = await ApiService.getSymbolsByUser(
+        userUuid: userUuid,
+        limit: 1000,
+      );
       setState(() {
-        _symbols = symbols;
+        _symbols = userSymbols.symbols;
         _isLoadingSymbols = false;
       });
     } catch (e) {
@@ -135,12 +150,12 @@ class _MapScreenState extends State<MapScreen> {
                     ? null
                     : _symbols
                           .map(
-                            (symbol) => MapBase.createAssetMarker(
+                            (symbol) => MapBase.createMarkerWithLabel(
                               symbol.symbolYCoord,
                               symbol.symbolXCoord,
                               'assets/images/icon_pin.png',
-                              width: 40,
-                              height: 40,
+                              symbol.symbolName,
+                              imageSize: 40,
                             ),
                           )
                           .toList(),

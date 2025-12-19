@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import '../base/base_layout.dart';
-import '../base/map_base.dart';
+import '../base/base_map.dart';
+import '../base/base_kirakira.dart';
 import '../models/symbol.dart';
 import '../services/api_service.dart';
 import '../services/user_storage.dart';
@@ -182,6 +183,9 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
 
       await ApiService.createSymbol(request);
 
+      // キラキラレベルを0にリセット
+      await KirakiraLevelService.resetKirakiraLevel();
+
       // symbol_monitor_screen.dartに遷移
       if (mounted) {
         Navigator.pushReplacement(
@@ -247,9 +251,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                         Positioned.fill(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(32),
-                            child: Container(
-                              color: Colors.grey.withAlpha(180),
-                            ),
+                            child: Container(color: Colors.grey.withAlpha(180)),
                           ),
                         ),
 

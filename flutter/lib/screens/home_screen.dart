@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../base/base_layout.dart';
-import '../base/map_base.dart';
+import '../base/base_map.dart';
+import '../base/base_kirakira.dart';
 import 'symbol_monitor_screen.dart';
 import 'symbol_pin_screen.dart';
 
@@ -13,7 +14,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with KirakiraLevelMixin {
   // 位置情報
   Position? _currentPosition;
   bool _isLoadingLocation = true;
@@ -23,6 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _getCurrentLocation();
+    loadKirakiraLevel();
   }
 
   // 位置情報の取得
@@ -100,11 +102,11 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         child: Center(
           child: Image.asset(
-            'assets/images/symbol_1.png',
+            'assets/images/symbol&back/symbol_lv$kirakiraLevel.png',
             fit: BoxFit.contain,
             width: screenWidth * 0.7,
             errorBuilder: (context, error, stack) {
-              return const Text('symbol_1.png not found');
+              return const Text('symbol image not found');
             },
           ),
         ),
