@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import '../base/base_layout.dart';
@@ -51,13 +50,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return BaseLayout(
       showBackButton: false,
-      //child: SingleChildScrollView(
-        child: Padding(
+      child: Padding(
         padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
         child: Column(
           children: [

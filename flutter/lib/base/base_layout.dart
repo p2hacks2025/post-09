@@ -32,15 +32,12 @@ class BaseLayout extends StatefulWidget {
 class _BaseLayoutState extends State<BaseLayout> {
   StreamSubscription<StepCount>? _stepSub;
   int? _deviceSteps; // デバイスの累積歩数
-  int? _apiSteps; // APIから取得した歩数
-  String? _currentUserUuid; // 現在のユーザーUUID
   Timer? _updateTimer; // 定期更新用タイマー
 
   @override
   void initState() {
     super.initState();
     _requestPedometerPermission();
-    _loadInitialData();
     _startPeriodicUpdate();
   }
 
@@ -60,38 +57,6 @@ class _BaseLayoutState extends State<BaseLayout> {
         });
       }
     });
-  }
-
-  // 初期データを読み込み（ユーザーと本日の歩数）
-  Future<void> _loadInitialData() async {
-    try {
-      // 保存されているユーザーUUIDを取得
-      final userUuid = await UserStorage.getUserUuid();
-
-      if (userUuid != null) {
-        setState(() {
-          _currentUserUuid = userUuid;
-        });
-        _fetchTodaySteps(userUuid);
-      }
-    } catch (e) {
-      debugPrint('Failed to load initial data: $e');
-    }
-  }
-
-  // 本日の歩数をAPIから取得
-  Future<void> _fetchTodaySteps(String userUuid) async {
-    try {
-      final dailyTotal = await ApiService.getDailyTotalSteps(
-        userUuid: userUuid,
-        targetDate: DateTime.now(),
-      );
-      setState(() {
-        _apiSteps = dailyTotal.totalSteps;
-      });
-    } catch (e) {
-      debugPrint('Failed to fetch today steps: $e');
-    }
   }
 
   Future<void> _requestPedometerPermission() async {

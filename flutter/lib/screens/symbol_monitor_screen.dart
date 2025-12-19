@@ -94,19 +94,19 @@ class _SymbolScreenState extends State<SymbolScreen> {
     return BaseLayout(
       showBackButton: false,
       showTopStepCounter: false,
-      child: SingleChildScrollView(
+      child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             children: [
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
 
               // 上部の灰色ボックス
               Container(
                 height: screenHeight * 0.6,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(32),
                 ),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
@@ -137,7 +137,7 @@ class _SymbolScreenState extends State<SymbolScreen> {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.02),
+              const Spacer(),
 
               // 下部のスタート/ストップボタン
               GestureDetector(
@@ -163,7 +163,7 @@ class _SymbolScreenState extends State<SymbolScreen> {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
             ],
           ),
         ),

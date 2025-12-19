@@ -1,8 +1,6 @@
 import 'user.dart';
 
 //歩数データをバックエンドから取得する
-String _formatDate(DateTime date) => date.toIso8601String().split('T').first;
-
 class StepEntry {
   final String uuid;
   final String userUuid;
