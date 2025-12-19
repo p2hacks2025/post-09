@@ -1,14 +1,15 @@
 # app/crud/step.py
 from typing import List, Optional, Tuple
 from datetime import date
-from datetime import date as date_type
+from datetime import date
 
-from sqlalchemy import and_
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
 from app.models.step import Step
 from app.schemas.step import StepCreate, StepUpdate
+from app.core.timezone import jst_day_to_utc_range
 
 
 class CRUDStep:
@@ -25,7 +26,7 @@ class CRUDStep:
     ) -> Optional[Step]:
         return (
             db_session.query(Step)
-            .filter(Step.user_uuid == user_uuid, Step.date == target_date)
+            .filter(Step.user_uuid == user_uuid, Step.created_at == target_date)
             .first()
         )
 
@@ -35,7 +36,7 @@ class CRUDStep:
         return (
             db_session.query(Step)
             .filter(Step.user_uuid == user_uuid)
-            .order_by(Step.date.desc())
+            .order_by(Step.created_at.desc())
             .offset(skip)
             .limit(limit)
             .all()
@@ -44,9 +45,9 @@ class CRUDStep:
     def create(self, db_session: Session, *, obj_in: StepCreate) -> Step:
         db_obj = Step(
             user_uuid=obj_in.user_uuid,
-            date=obj_in.date,
             step=obj_in.step,
             is_started=obj_in.is_started,
+            created_at=obj_in.created_at,
         )
         db_session.add(db_obj)
         try:
@@ -54,7 +55,7 @@ class CRUDStep:
         except IntegrityError as e:
             db_session.rollback()
             raise ValueError(
-                f"Step already exists for user_uuid={obj_in.user_uuid} date={obj_in.date}"
+                f"Step already exists for user_uuid={obj_in.user_uuid} created_at={obj_in.created_at}"
             ) from e
 
         db_session.refresh(db_obj)
@@ -130,35 +131,23 @@ class CRUDStep:
 
         return start_row, stop_row, diff
 
-    def calc_daily_total_steps(self, db_session: Session, *, user_uuid: str, target_date: date_type) -> int:
+    def calc_daily_total_steps(self, db: Session, *, user_uuid: str, target_date: date) -> int:
         """
         指定日の start/stop を created_at 順に見て、start->stop の差分を合算
         """
-        rows = (
-            db_session.query(Step)
-            .filter(Step.user_uuid == user_uuid, Step.date == target_date)
-            .order_by(Step.created_at.asc())
-            .all()
+        start_utc, end_utc = jst_day_to_utc_range(target_date)
+
+        total = (
+            db.query(func.sum(Step.step))
+            .filter(
+                Step.user_uuid == user_uuid,
+                Step.created_at >= start_utc,
+                Step.created_at < end_utc,
+            )
+            .scalar()
         )
 
-        total = 0
-        current_start: Optional[Step] = None
-
-        for r in rows:
-            if r.is_started:
-                # start は上書き（連続startが来たら最後を採用する運用）
-                current_start = r
-            else:
-                # stop
-                if current_start is None:
-                    continue  # start無しstopは無視（必要ならエラーでもOK）
-                diff = r.step - current_start.step
-                if diff >= 0:
-                    total += diff
-                # 1セッション終了
-                current_start = None
-
-        return total
+        return int(total or 0)
 
 
 
