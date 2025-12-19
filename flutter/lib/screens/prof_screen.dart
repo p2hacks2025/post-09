@@ -94,91 +94,17 @@ class _ProfScreenState extends State<ProfScreen> {
 
     return BaseLayout(
       showBackButton: false,
-      child: SingleChildScrollView(
+      child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             children: [
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
 
               // 緑色の長方形
-              Container(
-                width: double.infinity,
-                height: screenHeight * 0.33,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF368855),
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                child: Stack(
-                  children: [
-                    // テキスト（左）
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 40),
-                        child: _isLoading
-                            ? const Text(
-                                "読み込み中...",
-                                style: TextStyle(
-                                  color: Color(0xFFF0F337),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : Text(
-                                _user != null
-                                    ? "Power's ${_user!.name}"
-                                    : "Power's ゲスト",
-                                style: const TextStyle(
-                                  color: Color(0xFFF0F337),
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                    // 画像（右下）
-                    Positioned(
-                      right: -screenWidth * 0.08,
-                      bottom: -screenWidth * 0.08,
-                      child: Image.asset(
-                        'assets/images/symbol_1.png',
-                        width: screenWidth * 0.4,
-                        height: screenWidth * 0.4,
-                        errorBuilder: (context, error, stackTrace) {
-                          return SizedBox(
-                            width: screenWidth * 0.4,
-                            height: screenWidth * 0.4,
-                            child: const Icon(
-                              Icons.image,
-                              color: Color(0xFFF0F337),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    // 累計歩数テキスト（左下）
-                    Align(
-                      alignment: Alignment.bottomLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 40, bottom: 16),
-                        child: Text(
-                          _totalSteps != null
-                              ? '累計歩数：$_totalSteps pow'
-                              : '累計歩数：--- pow',
-                          style: const TextStyle(
-                            color: Color(0xFFF0F337),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildProfileCard(context),
 
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
 
               // 編集項目
               Align(
@@ -218,10 +144,84 @@ class _ProfScreenState extends State<ProfScreen> {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    return Container(
+      width: double.infinity,
+      height: screenHeight * 0.33,
+      decoration: BoxDecoration(
+        color: const Color(0xFF368855),
+        borderRadius: BorderRadius.circular(32),
+      ),
+      child: Stack(
+        children: [
+          // テキスト（左）
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 40),
+              child: _isLoading
+                  ? const Text(
+                      "読み込み中...",
+                      style: TextStyle(
+                        color: Color(0xFFF0F337),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : Text(
+                      _user != null ? "Power's ${_user!.name}" : "Power's ゲスト",
+                      style: const TextStyle(
+                        color: Color(0xFFF0F337),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
+          ),
+          // 画像（右下）
+          Positioned(
+            right: -screenWidth * 0.08,
+            bottom: -screenWidth * 0.08,
+            child: Image.asset(
+              'assets/images/symbol_1.png',
+              width: screenWidth * 0.4,
+              height: screenWidth * 0.4,
+              errorBuilder: (context, error, stackTrace) {
+                return SizedBox(
+                  width: screenWidth * 0.4,
+                  height: screenWidth * 0.4,
+                  child: const Icon(Icons.image, color: Color(0xFFF0F337)),
+                );
+              },
+            ),
+          ),
+          // 累計歩数テキスト（左下）
+          Align(
+            alignment: Alignment.bottomLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 40, bottom: 16),
+              child: Text(
+                _totalSteps != null ? '累計歩数：$_totalSteps pow' : '累計歩数：--- pow',
+                style: const TextStyle(
+                  color: Color(0xFFF0F337),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
