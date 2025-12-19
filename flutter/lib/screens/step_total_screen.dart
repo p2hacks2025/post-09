@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../base/base_layout.dart';
+import '../services/api_service.dart';
+import '../services/user_storage.dart';
 
 /// 足跡の累計を表示する画面
 class StepTotalScreen extends StatefulWidget {
@@ -10,7 +12,55 @@ class StepTotalScreen extends StatefulWidget {
 }
 
 class _StepTotalScreenState extends State<StepTotalScreen> {
-  final String _currentSteps = '---'; // 未実装（後で合計歩数を表示）
+  int? _totalSteps; // 累計歩数
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTotalSteps();
+  }
+
+  // 累計歩数を取得
+  Future<void> _loadTotalSteps() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      // 保存されているユーザーUUIDを取得
+      final userUuid = await UserStorage.getUserUuid();
+
+      if (userUuid == null) {
+        setState(() {
+          _error = 'ユーザーが登録されていません';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // ユーザーの全歩数を取得
+      final stepEntries = await ApiService.getStepsByUser(
+        userUuid: userUuid,
+        limit: 10000, // 大きな値を設定して全件取得
+      );
+
+      // 累計を計算
+      final total = stepEntries.fold<int>(0, (sum, entry) => sum + entry.step);
+
+      setState(() {
+        _totalSteps = total;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = '累計歩数の取得に失敗しました: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,14 +133,25 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
           const SizedBox(height: 12),
 
           // 歩数の数値
-          Text(
-            '$_currentSteps歩',
-            style: const TextStyle(
-              color: Color(0xFFF0F337),
-              fontSize: 48,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          _isLoading
+              ? const CircularProgressIndicator(color: Color(0xFFF0F337))
+              : _error != null
+              ? const Text(
+                  'エラー',
+                  style: TextStyle(
+                    color: Color(0xFFF0F337),
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                  ),
+                )
+              : Text(
+                  '$_totalSteps歩',
+                  style: const TextStyle(
+                    color: Color(0xFFF0F337),
+                    fontSize: 48,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
 
           const SizedBox(height: 24),
         ],
