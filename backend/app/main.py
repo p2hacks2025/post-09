@@ -5,7 +5,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 
 from app.core.logging import setup_logging
 from app.db.session import SessionLocal
-from app.crud import symbol
+from app.crud.symbol import symbol_crud
 from app.api.api import api_router
 from app.db.base_class import Base
 from app.db.session import engine
@@ -21,7 +21,7 @@ scheduler = BackgroundScheduler(timezone="UTC")
 def run_kirakira_decay():
     db = SessionLocal()
     try:
-        symbol.decay_kirakira_levels(db)
+        symbol_crud.decay_kirakira_levels(db)
     finally:
         db.close()
 
