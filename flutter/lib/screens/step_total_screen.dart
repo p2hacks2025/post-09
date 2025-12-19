@@ -16,22 +16,22 @@ class _StepTotalScreenState extends State<StepTotalScreen> {
   Widget build(BuildContext context) {
     return BaseLayout(
       showBackButton: false,
-      child: SingleChildScrollView(
+      child: SizedBox.expand(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: Column(
             children: [
-              const SizedBox(height: 24),
+              const Spacer(),
 
               // 緑色のカード
               _buildStepCard(context),
 
-              const SizedBox(height: 24),
+              const Spacer(),
 
               // 黄色いボタン
               _buildSubmitButton(context),
 
-              const SizedBox(height: 24),
+              const Spacer(),
             ],
           ),
         ),
