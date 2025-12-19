@@ -6,8 +6,7 @@ from sqlalchemy.orm import Session
 from app.models.symbol import Symbol
 from app.schemas.symbol import SymbolCreate, SymbolUpdate, SymbolResponse, UserSymbolsResponse
 from app.core.timezone import jst_day_to_utc_range
-
-DECAY_HOURS = 72 # キラキラレベルが減少するまでの時間（72時間）
+from app.core.config import DECAY_HOURS
 
 class CRUDSymbol:
     def decay_kirakira_levels(self, db_session: Session) -> int:
