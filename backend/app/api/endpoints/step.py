@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.schemas.step import StepCreate, StepUpdate, StepResponse, DailyTotalStepsResponse, LatestSessionStepsResponse
 from app.crud.step import step_crud
+from app.core.timezone import JST, jst_day_to_utc_range
 
 router = APIRouter()
 
@@ -159,4 +160,4 @@ def get_daily_total_steps(*, db: Session = Depends(get_db), user_uuid: str, targ
     logging.info("[START] get_daily_total_steps")
     total = step_crud.calc_daily_total_steps(db, user_uuid=user_uuid, target_date=target_date)
     logging.info("[END] get_daily_total_steps")
-    return DailyTotalStepsResponse(user_uuid=user_uuid, date=target_date, total_steps=total)
+    return DailyTotalStepsResponse(user_uuid=user_uuid, total_steps=total)

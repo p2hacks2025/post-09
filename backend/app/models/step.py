@@ -25,13 +25,6 @@ class Step(Base):
         index=True,
     )
 
-    # 今日の日付（YYYY-MM-DD）
-    date = Column(
-        Date,
-        nullable=False,
-        index=True,
-    )
-
     # 歩数
     step = Column(
         Integer,
@@ -53,7 +46,7 @@ class Step(Base):
     )
 
     __table_args__ = (
-        Index("ix_step_user_date_created_at", "user_uuid", "date", "created_at"),
+        Index("ix_step_user_date_created_at", "user_uuid", "created_at"),
     )
 
 
