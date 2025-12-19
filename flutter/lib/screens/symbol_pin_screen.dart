@@ -69,12 +69,12 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
 
     return BaseLayout(
       showBackButton: true,
-      child: SingleChildScrollView(
+      child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             children: [
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
 
               // マップベース（共通MapBase + 位置取得の導入）
               if (_isLoadingLocation)
@@ -90,12 +90,12 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                   height: screenHeight * 0.6,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                   child: Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(32),
                         child: MapBase.createMapWidget(
                           latitude: _currentPosition!.latitude,
                           longitude: _currentPosition!.longitude,
@@ -109,8 +109,14 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                       // 曇ったオーバーレイ（濃いグレーで曇ったイメージ、5秒後に消える）
                       if (_showLabel)
                         Positioned.fill(
-                          child: Container(color: Colors.grey.withAlpha(180)),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(32),
+                            child: Container(
+                              color: Colors.grey.withAlpha(180),
+                            ),
+                          ),
                         ),
+
                       // 画面中央に固定されたピン（常時表示）
                       Positioned.fill(
                         child: Align(
@@ -150,7 +156,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                   height: screenHeight * 0.6,
                 ),
 
-              SizedBox(height: screenHeight * 0.02),
+              const Spacer(),
 
               // 確定ボタン
               GestureDetector(
@@ -183,7 +189,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
             ],
           ),
         ),
