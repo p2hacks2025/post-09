@@ -63,17 +63,17 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             const Spacer(),
 
-            // シンボルカード（サイズ固定）
+            // シンボルカード
             _buildSymbolCard(context),
 
             const Spacer(),
 
-            // マップカード（サイズ固定）
+            // マップカード
             _buildMapCard(context),
 
             const Spacer(),
 
-            // 黄色ボタン（サイズ固定）
+            // 黄色ボタン
             _buildYellowButtons(context),
 
             const Spacer(),

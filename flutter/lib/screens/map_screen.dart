@@ -98,7 +98,7 @@ class _MapScreenState extends State<MapScreen> {
               )
             : _currentPosition != null
                 ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(32),
                     child: MapBase.createMapWidget(
                       latitude: _currentPosition!.latitude,
                       longitude: _currentPosition!.longitude,

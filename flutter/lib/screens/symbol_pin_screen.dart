@@ -69,12 +69,12 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
 
     return BaseLayout(
       showBackButton: true,
-      child: SingleChildScrollView(
+      child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             children: [
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
 
               // マップベース（共通MapBase + 位置取得の導入）
               if (_isLoadingLocation)
@@ -90,12 +90,12 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                   height: screenHeight * 0.6,
                   decoration: BoxDecoration(
                     border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                   child: Stack(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(32),
                         child: MapBase.createMapWidget(
                           latitude: _currentPosition!.latitude,
                           longitude: _currentPosition!.longitude,
@@ -150,7 +150,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                   height: screenHeight * 0.6,
                 ),
 
-              SizedBox(height: screenHeight * 0.02),
+              const Spacer(),
 
               // 確定ボタン
               GestureDetector(
@@ -167,7 +167,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                   height: screenHeight * 0.09,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF0F337),
-                    borderRadius: BorderRadius.circular(screenHeight * 0.045),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                   child: Center(
                     child: Text(
@@ -183,7 +183,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
                 ),
               ),
 
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
             ],
           ),
         ),
