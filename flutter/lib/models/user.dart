@@ -37,3 +37,19 @@ class UserCreateRequest {
       _$UserCreateRequestFromJson(json);
   Map<String, dynamic> toJson() => _$UserCreateRequestToJson(this);
 }
+
+class UserUpdateRequest {
+  final String? name;
+  final int? length;
+  final int? weight;
+
+  UserUpdateRequest({this.name, this.length, this.weight});
+
+  Map<String, dynamic> toJson() {
+    return {
+      if (name != null) 'name': name,
+      if (length != null) 'length': length,
+      if (weight != null) 'weight': weight,
+    };
+  }
+}

@@ -3,6 +3,9 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import '../base/base_layout.dart';
 import '../base/map_base.dart';
+import '../models/symbol.dart';
+import '../services/api_service.dart';
+import '../services/user_storage.dart';
 import 'symbol_monitor_screen.dart';
 
 /// シンボルの位置をマップ上で指定する画面（ベース導入）
@@ -60,6 +63,139 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
       _currentPosition = pos;
       _isLoadingLocation = false;
     });
+  }
+
+  void _showSymbolNameDialog(BuildContext context) {
+    final TextEditingController nameController = TextEditingController();
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            padding: EdgeInsets.all(screenWidth * 0.06),
+            decoration: BoxDecoration(
+              color: const Color(0xFFB0B4CF),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'シンボルの名前を決めてください',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.03),
+                TextField(
+                  controller: nameController,
+                  decoration: InputDecoration(
+                    hintText: 'ここに文字を入力',
+                    hintStyle: TextStyle(color: Colors.grey[400]),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Colors.blue),
+                    ),
+                  ),
+                ),
+                SizedBox(height: screenHeight * 0.03),
+                GestureDetector(
+                  onTap: () async {
+                    final symbolName = nameController.text;
+                    if (symbolName.isEmpty) {
+                      return;
+                    }
+                    Navigator.pop(dialogContext);
+                    await _saveSymbolAndNavigate(symbolName);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: screenHeight * 0.07,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F337),
+                      borderRadius: BorderRadius.circular(screenHeight * 0.035),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '決定',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.045,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _saveSymbolAndNavigate(String symbolName) async {
+    if (_currentPosition == null) return;
+
+    try {
+      // ユーザーUUIDを取得
+      final userUuid = await UserStorage.getUserUuid();
+      if (userUuid == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('ユーザー情報が見つかりません')));
+        }
+        return;
+      }
+
+      // マップの中心座標を取得（ピンの位置）
+      final center = _mapController.camera.center;
+
+      // シンボルを作成
+      final request = SymbolCreateRequest(
+        userUuid: userUuid,
+        symbolName: symbolName,
+        symbolXCoord: center.longitude,
+        symbolYCoord: center.latitude,
+        kirakiraLevel: 0,
+      );
+
+      await ApiService.createSymbol(request);
+
+      // symbol_monitor_screen.dartに遷移
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SymbolScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('シンボルの作成に失敗しました: $e')));
+      }
+    }
   }
 
   @override
@@ -161,12 +297,7 @@ class _SymbolPinScreenState extends State<SymbolPinScreen> {
               // 確定ボタン
               GestureDetector(
                 onTap: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const SymbolScreen(),
-                    ),
-                  );
+                  _showSymbolNameDialog(context);
                 },
                 child: Container(
                   width: double.infinity,

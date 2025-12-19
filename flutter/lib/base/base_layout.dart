@@ -6,6 +6,9 @@ import '../screens/home_screen.dart';
 import '../screens/map_screen.dart';
 import '../screens/step_total_screen.dart';
 import '../screens/prof_screen.dart';
+import '../screens/setting_screen.dart';
+import '../services/api_service.dart';
+import '../services/user_storage.dart';
 
 // 全画面共通のベースレイアウト
 class BaseLayout extends StatefulWidget {
@@ -28,18 +31,32 @@ class BaseLayout extends StatefulWidget {
 
 class _BaseLayoutState extends State<BaseLayout> {
   StreamSubscription<StepCount>? _stepSub;
-  int? _currentSteps;
+  int? _deviceSteps; // デバイスの累積歩数
+  Timer? _updateTimer; // 定期更新用タイマー
 
   @override
   void initState() {
     super.initState();
     _requestPedometerPermission();
+    _startPeriodicUpdate();
   }
 
   @override
   void dispose() {
     _stepSub?.cancel();
+    _updateTimer?.cancel();
     super.dispose();
+  }
+
+  // 定期的に表示を更新（計測中の歩数を反映）
+  void _startPeriodicUpdate() {
+    _updateTimer = Timer.periodic(const Duration(milliseconds: 500), (timer) {
+      if (mounted) {
+        setState(() {
+          // 状態を更新してUIを再描画
+        });
+      }
+    });
   }
 
   Future<void> _requestPedometerPermission() async {
@@ -53,13 +70,31 @@ class _BaseLayoutState extends State<BaseLayout> {
     _stepSub = Pedometer.stepCountStream.listen(
       (event) {
         setState(() {
-          _currentSteps = event.steps;
+          _deviceSteps = event.steps;
         });
       },
       onError: (error) {
         debugPrint('Pedometer error: $error');
       },
     );
+  }
+
+  // 表示する歩数を取得（計測中なら計測中の歩数、そうでなければ直前の記録）
+  Future<int> _getDisplaySteps() async {
+    // まず計測中の歩数を確認
+    final displaySteps = await UserStorage.getDisplaySteps();
+    if (displaySteps != null) {
+      return displaySteps;
+    }
+
+    // 計測中でなければ直前に記録した歩数を表示
+    final lastRecordedSteps = await UserStorage.getLastRecordedSteps();
+    if (lastRecordedSteps != null) {
+      return lastRecordedSteps;
+    }
+
+    // 何もなければ0
+    return 0;
   }
 
   @override
@@ -116,8 +151,14 @@ class _BaseLayoutState extends State<BaseLayout> {
         child: Row(
           children: [
             // 左上のウィジェット（歩数表示または戻るボタン）
-            if (widget.showTopStepCounter && _currentSteps != null)
-              _buildStepCounter(context, _currentSteps!)
+            if (widget.showTopStepCounter)
+              FutureBuilder<int>(
+                future: _getDisplaySteps(),
+                builder: (context, snapshot) {
+                  final steps = snapshot.data ?? 0;
+                  return _buildStepCounter(context, steps);
+                },
+              )
             else if (widget.showBackButton)
               GestureDetector(
                 onTap: () {
@@ -139,24 +180,14 @@ class _BaseLayoutState extends State<BaseLayout> {
 
             const Spacer(),
 
-            // タイトル（オプション）
+            // タイトル（オプション、無背景で中央に表示）
             if (widget.title != null)
-              Container(
-                padding: EdgeInsets.symmetric(
-                  horizontal: iconSize * 0.5,
-                  vertical: iconSize * 0.25,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(iconSize * 0.3),
-                ),
-                child: Text(
-                  widget.title!,
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: iconSize * 0.45,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Text(
+                widget.title!,
+                style: TextStyle(
+                  color: Colors.black,
+                  fontSize: iconSize * 0.5,
+                  fontWeight: FontWeight.w700,
                 ),
               )
             else
@@ -165,22 +196,31 @@ class _BaseLayoutState extends State<BaseLayout> {
             const Spacer(),
 
             // 設定アイコン（背景なし）
-            SizedBox(
-              width: iconSize,
-              height: iconSize,
-              child: Center(
-                child: Image.asset(
-                  'assets/images/icon_setting.png',
-                  width: iconSize * 0.8,
-                  height: iconSize * 0.8,
-                  color: Colors.black,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Icon(
-                      Icons.settings,
-                      color: Colors.black,
-                      size: iconSize * 0.8,
-                    );
-                  },
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const SettingScreen(),
+                  ),
+                );
+              },
+              child: SizedBox(
+                width: iconSize,
+                height: iconSize,
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/icon_setting.png',
+                    width: iconSize * 0.8,
+                    height: iconSize * 0.8,
+                    color: Colors.black,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.settings,
+                        color: Colors.black,
+                        size: iconSize * 0.8,
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
