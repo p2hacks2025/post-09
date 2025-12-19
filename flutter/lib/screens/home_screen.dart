@@ -56,29 +56,28 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return BaseLayout(
       showBackButton: false,
-      child: SingleChildScrollView(
+      //child: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
-          child: Column(
-            children: [
-              SizedBox(height: screenHeight * 0.06),
+        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
+        child: Column(
+          children: [
+            const Spacer(),
 
-              // シンボルカード
-              _buildSymbolCard(context),
+            // シンボルカード（サイズ固定）
+            _buildSymbolCard(context),
 
-              SizedBox(height: screenHeight * 0.06),
+            const Spacer(),
 
-              // マップカード
-              _buildMapCard(context),
+            // マップカード（サイズ固定）
+            _buildMapCard(context),
 
-              SizedBox(height: screenHeight * 0.06),
+            const Spacer(),
 
-              // 黄色いボタン2つ
-              _buildYellowButtons(context),
+            // 黄色ボタン（サイズ固定）
+            _buildYellowButtons(context),
 
-              SizedBox(height: screenHeight * 0.06),
-            ],
-          ),
+            const Spacer(),
+          ],
         ),
       ),
     );

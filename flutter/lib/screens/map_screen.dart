@@ -70,31 +70,34 @@ class _MapScreenState extends State<MapScreen> {
 
     return BaseLayout(
       showBackButton: false,
-      child: SingleChildScrollView(
+      child: SizedBox.expand( 
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             children: [
-              SizedBox(height: screenHeight * 0.06),
+          const Spacer(flex:1),
+          Expanded(
+            flex:16,
+            child: _buildMapCard(context)),
+          const Spacer(flex:1),
+        ],
+          ),
+        ),
+      ),
+    );
+  }
 
-              // マップコンテンツ
-              if (_isLoadingLocation)
-                MapBase.buildLoadingPlaceholder(height: screenHeight * 0.5)
-              else if (_locationError != null)
-                MapBase.buildErrorPlaceholder(
-                  errorMessage: _locationError!,
-                  onRetry: _getCurrentLocation,
-                  height: screenHeight * 0.5,
-                )
-              else if (_currentPosition != null)
-                // マップウィジェット
-                Container(
-                  height: screenHeight * 0.75,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ClipRRect(
+  Widget _buildMapCard(BuildContext context) {
+  return SizedBox.expand(
+    child: _isLoadingLocation
+        ? MapBase.buildLoadingPlaceholder()
+        : _locationError != null
+            ? MapBase.buildErrorPlaceholder(
+                errorMessage: _locationError!,
+                onRetry: _getCurrentLocation,
+              )
+            : _currentPosition != null
+                ? ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: MapBase.createMapWidget(
                       latitude: _currentPosition!.latitude,
@@ -103,14 +106,8 @@ class _MapScreenState extends State<MapScreen> {
                       interactive: true,
                       controller: _mapController,
                     ),
-                  ),
-                ),
-
-              SizedBox(height: screenHeight * 0.06),
-            ],
-          ),
-        ),
-      ),
+                  )
+                : const SizedBox.shrink(),
     );
   }
 }
