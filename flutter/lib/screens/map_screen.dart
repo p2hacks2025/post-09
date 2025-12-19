@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import '../base/base_layout.dart';
 import '../base/map_base.dart';
+import '../models/symbol.dart' as symbol_model;
+import '../services/api_service.dart';
 
 // マップ画面
 class MapScreen extends StatefulWidget {
@@ -19,12 +21,17 @@ class _MapScreenState extends State<MapScreen> {
   String? _locationError;
   bool _isLoadingLocation = true;
 
+  // シンボル情報
+  List<symbol_model.Symbol> _symbols = [];
+  bool _isLoadingSymbols = true;
+
   final MapController _mapController = MapController();
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+    _loadSymbols();
   }
 
   @override
@@ -63,6 +70,27 @@ class _MapScreenState extends State<MapScreen> {
     });
   }
 
+  // シンボルデータの読み込み
+  Future<void> _loadSymbols() async {
+    setState(() {
+      _isLoadingSymbols = true;
+    });
+
+    try {
+      final symbols = await ApiService.getSymbols(limit: 1000);
+      setState(() {
+        _symbols = symbols;
+        _isLoadingSymbols = false;
+      });
+    } catch (e) {
+      debugPrint('シンボル取得エラー: $e');
+      setState(() {
+        _symbols = [];
+        _isLoadingSymbols = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -70,17 +98,15 @@ class _MapScreenState extends State<MapScreen> {
 
     return BaseLayout(
       showBackButton: false,
-      child: SizedBox.expand( 
+      child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             children: [
-          const Spacer(flex:1),
-          Expanded(
-            flex:16,
-            child: _buildMapCard(context)),
-          const Spacer(flex:1),
-        ],
+              const Spacer(flex: 1),
+              Expanded(flex: 16, child: _buildMapCard(context)),
+              const Spacer(flex: 1),
+            ],
           ),
         ),
       ),
@@ -88,26 +114,39 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Widget _buildMapCard(BuildContext context) {
-  return SizedBox.expand(
-    child: _isLoadingLocation
-        ? MapBase.buildLoadingPlaceholder()
-        : _locationError != null
-            ? MapBase.buildErrorPlaceholder(
-                errorMessage: _locationError!,
-                onRetry: _getCurrentLocation,
-              )
-            : _currentPosition != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: MapBase.createMapWidget(
-                      latitude: _currentPosition!.latitude,
-                      longitude: _currentPosition!.longitude,
-                      zoom: 15.0,
-                      interactive: true,
-                      controller: _mapController,
-                    ),
-                  )
-                : const SizedBox.shrink(),
+    return SizedBox.expand(
+      child: _isLoadingLocation
+          ? MapBase.buildLoadingPlaceholder()
+          : _locationError != null
+          ? MapBase.buildErrorPlaceholder(
+              errorMessage: _locationError!,
+              onRetry: _getCurrentLocation,
+            )
+          : _currentPosition != null
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: MapBase.createMapWidget(
+                latitude: _currentPosition!.latitude,
+                longitude: _currentPosition!.longitude,
+                zoom: 15.0,
+                interactive: true,
+                controller: _mapController,
+                additionalMarkers: _isLoadingSymbols
+                    ? null
+                    : _symbols
+                          .map(
+                            (symbol) => MapBase.createAssetMarker(
+                              symbol.symbolYCoord,
+                              symbol.symbolXCoord,
+                              'assets/images/icon_pin.png',
+                              width: 40,
+                              height: 40,
+                            ),
+                          )
+                          .toList(),
+              ),
+            )
+          : const SizedBox.shrink(),
     );
   }
 }
