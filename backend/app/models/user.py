@@ -26,3 +26,10 @@ class User(Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+
+    symbols = relationship(
+        "Symbol",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
