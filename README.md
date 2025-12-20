@@ -1,7 +1,10 @@
 # P2HACKS2025 アピールシート
 
 ## プロダクト名
+<img width="100" height="100" alt="rogo2" src="https://github.com/user-attachments/assets/a407e609-c465-4590-8a55-88788ca30a09" />
+
 さんぽのプロ ~車は甘え~
+
 
 ## コンセプト
 歩いてシンボルを育てる育成ゲーム
@@ -12,9 +15,13 @@
 運動不足の人（車を使っている人）
 
 ## 利用の流れ
-プロダクトを起動したり、ランディングした時やその後の流れを書きます。
-手順書のようなものではなくてもよいですが、読んだらプロダクトの使い方がわかるものがよいです。
-必要に応じて、プロダクトを知るまでの流れも書いてよいでしょう。
+1. 前提条件として、ユーザはAndroidスマホを使用
+2. アプリを起動
+3. ユーザ登録（ニックネーム・身長・体重）
+4. シンボルの位置を設定
+5. シンボルに向かって歩く
+6. シンボルに着いたら、貯めたポイントを捧げる
+7. 捧げたポイントに応じてシンボルが変化
 
 ## 推しポイント
 - レベルによって変わるシンボルの装飾
@@ -24,7 +31,7 @@
 
 
 ## スクリーンショット(任意)
-|<img width="108" height="240" alt="Screenshot_20251220-112425" src="https://github.com/user-attachments/assets/0575e41a-1ce5-42ff-8a7b-d0320a8d8fa2" />||<img width="108" height="240" alt="Screenshot_20251220-122224" src="https://github.com/user-attachments/assets/784a06e8-1c99-46c4-973d-5994c927175d" />||<img width="108" height="240" alt="Screenshot_20251220-122254" src="https://github.com/user-attachments/assets/c22e7862-e6b4-43a0-833c-4ff543c02ffd" />||<img width="108" height="240" alt="Screenshot_20251220-122250" src="https://github.com/user-attachments/assets/c172d240-23ef-4025-99af-216ab14265a8" />||<img width="108" height="240" alt="Screenshot_20251220-133530" src="https://github.com/user-attachments/assets/ea13eec7-e966-4825-baac-1633c47810cd" />|<img width="108" height="240" alt="Screenshot_20251220-133537" src="https://github.com/user-attachments/assets/a0ca53cf-3939-4a37-a870-ae3717b46719" />|<img width="108" height="240" alt="Screenshot_20251220-133544" src="https://github.com/user-attachments/assets/9c2634f7-6fd2-4495-b76f-ce7328f6c0d9" />|||
+<img width="108" height="240" alt="Screenshot_20251220-112425" src="https://github.com/user-attachments/assets/0575e41a-1ce5-42ff-8a7b-d0320a8d8fa2" /> <img width="108" height="240" alt="Screenshot_20251220-122224" src="https://github.com/user-attachments/assets/784a06e8-1c99-46c4-973d-5994c927175d" /> <img width="108" height="240" alt="Screenshot_20251220-122254" src="https://github.com/user-attachments/assets/c22e7862-e6b4-43a0-833c-4ff543c02ffd" /> <img width="108" height="240" alt="Screenshot_20251220-122250" src="https://github.com/user-attachments/assets/c172d240-23ef-4025-99af-216ab14265a8" /> <img width="108" height="240" alt="Screenshot_20251220-133530" src="https://github.com/user-attachments/assets/ea13eec7-e966-4825-baac-1633c47810cd" /> <img width="108" height="240" alt="Screenshot_20251220-133537" src="https://github.com/user-attachments/assets/a0ca53cf-3939-4a37-a870-ae3717b46719" /> <img width="108" height="240" alt="Screenshot_20251220-133544" src="https://github.com/user-attachments/assets/9c2634f7-6fd2-4495-b76f-ce7328f6c0d9" />
 
 ## 開発体制
 
@@ -40,12 +47,14 @@
   - 事前に技術領域を共有していたので、ある程度お互いのカバーできる範囲を認識できていた
 - Flutterの役割内でも、ベースの実装と整備で、ベルトコンベア式の作業を行った
   - 作業途中にコンフリクトが発生しにくく、スムーズな開発ができた
+- 各個人の体調に合わせて作業を進めつつ、完成させることができた
 
 ## 開発技術
 
 ### 利用したプログラミング言語
 - Dart
 - Python
+- その他Flutterに関連した言語
 
 ### 利用したフレームワーク・ライブラリ
 - Flutter
@@ -77,5 +86,5 @@
 - ChatGPT
 - Github Copilot
 - Gemini
-- Notion
+- [Notion](https://www.notion.so/2c54a396857c807b9525e498f271e822)
 - [Google Drive](https://drive.google.com/drive/folders/1C_og9fQa2ZmGI_jKQgzpgmqoGQxlETS4?usp=drive_link)
