@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../services/user_storage.dart';
-import 'home_screen.dart';
+import 'symbol_pin_screen.dart';
+import '../base/base_map.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class StartScreen extends StatefulWidget {
   const StartScreen({Key? key}) : super(key: key);
@@ -11,6 +13,23 @@ class StartScreen extends StatefulWidget {
 }
 
 class _StartScreenState extends State<StartScreen> {
+  // 歩数・位置情報の権限リクエスト
+  Future<void> _requestPermissions() async {
+    // 歩数（Activity Recognition）
+    try {
+      final activityStatus = await Permission.activityRecognition.request();
+      // 必要ならここで状態に応じた処理を追加
+    } catch (e) {
+      debugPrint('歩数権限エラー: $e');
+    }
+    // 位置情報
+    try {
+      await MapBase.checkLocationPermission();
+    } catch (e) {
+      debugPrint('位置情報権限エラー: $e');
+    }
+  }
+
   bool _showWelcome = true;
   bool _showCompleteMessage = false;
   int? _selectedHeight;
@@ -26,6 +45,8 @@ class _StartScreenState extends State<StartScreen> {
   @override
   void initState() {
     super.initState();
+    // 権限リクエスト
+    _requestPermissions();
     // 3秒後にユーザー登録画面に切り替える
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
@@ -86,7 +107,7 @@ class _StartScreenState extends State<StartScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const SymbolPinScreen()),
         );
       }
     } catch (e) {
