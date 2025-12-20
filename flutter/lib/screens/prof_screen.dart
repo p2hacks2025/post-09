@@ -182,7 +182,7 @@ class _ProfScreenState extends State<ProfScreen> with KirakiraLevelMixin {
                       ),
                     )
                   : Text(
-                      _user != null ? "Power's ${_user!.name}" : "Power's ゲスト",
+                      _user != null ? "${_user!.name}" : "ゲスト",
                       style: const TextStyle(
                         color: Color(0xFFF0F337),
                         fontSize: 24,

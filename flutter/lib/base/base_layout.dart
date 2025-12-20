@@ -16,6 +16,7 @@ class BaseLayout extends StatefulWidget {
   final String? title; // タイトル（オプション）
   final bool showBackButton; // 戻るボタンを表示するか
   final bool showTopStepCounter; // 上部の歩数表示を出すか
+  final Widget? customTopLeftWidget; // カスタムウィジェット（左上）
 
   const BaseLayout({
     super.key,
@@ -23,6 +24,7 @@ class BaseLayout extends StatefulWidget {
     this.title,
     this.showBackButton = true,
     this.showTopStepCounter = true,
+    this.customTopLeftWidget,
   });
 
   @override
@@ -150,8 +152,10 @@ class _BaseLayoutState extends State<BaseLayout> {
         padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
         child: Row(
           children: [
-            // 左上のウィジェット（歩数表示または戻るボタン）
-            if (widget.showTopStepCounter)
+            // 左上のウィジェット（カスタムウィジェット、歩数表示、または戻るボタン）
+            if (widget.customTopLeftWidget != null)
+              widget.customTopLeftWidget!
+            else if (widget.showTopStepCounter)
               FutureBuilder<int>(
                 future: _getDisplaySteps(),
                 builder: (context, snapshot) {

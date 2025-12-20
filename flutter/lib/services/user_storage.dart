@@ -6,6 +6,7 @@ class UserStorage {
   static const String _keyDisplaySteps = 'display_steps'; // 表示する歩数
   static const String _keyLastRecordedSteps =
       'last_recorded_steps'; // 直前に記録した歩数
+  static const String _keyBonusSteps = 'bonus_steps'; // 次回スタート時の追加歩数
 
   /// 現在のユーザーUUIDを保存
   static Future<void> saveUserUuid(String uuid) async {
@@ -59,5 +60,29 @@ class UserStorage {
   static Future<int?> getLastRecordedSteps() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_keyLastRecordedSteps);
+  }
+
+  /// 次回スタート時の追加歩数を保存
+  static Future<void> saveBonusSteps(int steps) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyBonusSteps, steps);
+  }
+
+  /// 次回スタート時の追加歩数を取得
+  static Future<int> getBonusSteps() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_keyBonusSteps) ?? 0;
+  }
+
+  /// 次回スタート時の追加歩数をクリア
+  static Future<void> clearBonusSteps() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyBonusSteps);
+  }
+
+  /// 次回スタート時の追加歩数を1000増やす
+  static Future<void> addBonusSteps() async {
+    final current = await getBonusSteps();
+    await saveBonusSteps(current + 1000);
   }
 }

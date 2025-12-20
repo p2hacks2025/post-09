@@ -60,22 +60,17 @@ class _HomeScreenState extends State<HomeScreen> with KirakiraLevelMixin {
         padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
         child: Column(
           children: [
-            const Spacer(),
+            const Spacer(flex: 2),
 
             // シンボルカード（サイズ固定）
             _buildSymbolCard(context),
 
-            const Spacer(),
+            const Spacer(flex: 1),
 
             // マップカード（サイズ固定）
             _buildMapCard(context),
 
-            const Spacer(),
-
-            // 黄色ボタン（サイズ固定）
-            _buildYellowButtons(context),
-
-            const Spacer(),
+            const Spacer(flex: 2),
           ],
         ),
       ),
@@ -97,7 +92,12 @@ class _HomeScreenState extends State<HomeScreen> with KirakiraLevelMixin {
         width: double.infinity,
         height: screenHeight * 0.35,
         decoration: BoxDecoration(
-          color: const Color(0xFFD4D4D4),
+          image: DecorationImage(
+            image: AssetImage(
+              'assets/images/symbol&back/back_lv$kirakiraLevel.png',
+            ),
+            fit: BoxFit.cover,
+          ),
           borderRadius: BorderRadius.circular(32),
         ),
         child: Center(
@@ -168,36 +168,6 @@ class _HomeScreenState extends State<HomeScreen> with KirakiraLevelMixin {
                 ),
         ),
       ),
-    );
-  }
-
-  Widget _buildYellowButtons(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final buttonHeight = screenHeight * 0.09;
-
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            height: buttonHeight,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F337),
-              borderRadius: BorderRadius.circular(buttonHeight / 2),
-            ),
-          ),
-        ),
-        SizedBox(width: screenWidth * 0.06),
-        Expanded(
-          child: Container(
-            height: buttonHeight,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF0F337),
-              borderRadius: BorderRadius.circular(buttonHeight / 2),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
