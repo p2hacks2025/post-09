@@ -97,6 +97,26 @@ mixin KirakiraLevelMixin<T extends StatefulWidget> on State<T> {
       successMessage: 'キラキラレベルが${newLevel}になりました！',
     );
   }
+
+  /// キラキラレベルが最大値を超えていないかチェックし、超えていたら修正
+  Future<void> fixKirakiraLevelIfExceedsMax({
+    int maxLevel = 2,
+    bool showMessage = true,
+  }) async {
+    if (_kirakiraLevel > maxLevel) {
+      debugPrint('キラキラレベルが${_kirakiraLevel}になっているため、${maxLevel}に修正します');
+      await syncKirakiraLevelToServer(
+        level: maxLevel,
+        showSuccessMessage: showMessage,
+        successMessage: 'キラキラレベルを最大値($maxLevel)に修正しました',
+      );
+    }
+  }
+
+  /// キラキラレベルが最大値に達しているかチェック
+  bool isKirakiraLevelMax({int maxLevel = 2}) {
+    return _kirakiraLevel >= maxLevel;
+  }
 }
 
 /// キラキラレベル管理用のユーティリティクラス（StatefulWidget以外で使用）
