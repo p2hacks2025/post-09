@@ -86,5 +86,5 @@
 - ChatGPT
 - Github Copilot
 - Gemini
-- Notion
+- [Notion](https://www.notion.so/2c54a396857c807b9525e498f271e822)
 - [Google Drive](https://drive.google.com/drive/folders/1C_og9fQa2ZmGI_jKQgzpgmqoGQxlETS4?usp=drive_link)
