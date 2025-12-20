@@ -49,8 +49,8 @@ class ProfScreenWidgets {
           ),
           // 画像（右下）
           Positioned(
-            right: -screenWidth * 0.08,
-            bottom: -screenWidth * 0.08,
+            right: screenWidth * 0.01,
+            bottom: screenWidth * 0.01,
             child: Image.asset(
               'assets/images/symbol&back/symbol_lv$kirakiraLevel.png',
               width: screenWidth * 0.4,
