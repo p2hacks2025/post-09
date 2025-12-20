@@ -25,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with KirakiraLevelMixin {
     super.initState();
     _getCurrentLocation();
     loadKirakiraLevel();
+    fixKirakiraLevelIfExceedsMax(); // レベルが2を超えていたら修正
   }
 
   // 位置情報の取得

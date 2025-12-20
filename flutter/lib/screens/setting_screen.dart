@@ -26,13 +26,13 @@ class _SettingScreenState extends State<SettingScreen> {
       title: '設定',
       showBackButton: false,
       showTopStepCounter: false,
-      child: SizedBox.expand(
+      child: SingleChildScrollView(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Spacer(),
+              SizedBox(height: screenHeight * 0.05),
 
               // サウンド設定
               _buildSettingSection(
@@ -68,7 +68,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ],
               ),
 
-              const Spacer(),
+              SizedBox(height: screenHeight * 0.05),
 
               // 初期化設定
               _buildSettingSection(
@@ -102,7 +102,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ],
               ),
 
-              const Spacer(),
+              SizedBox(height: screenHeight * 0.05),
 
               // インフル・コロナ設定
               _buildSettingSection(
@@ -176,7 +176,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ],
               ),
 
-              const Spacer(),
+              SizedBox(height: screenHeight * 0.05),
             ],
           ),
         ),

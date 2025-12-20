@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:geolocator/geolocator.dart';
 import '../base/base_layout.dart';
 import '../base/base_kirakira.dart';
 import '../services/api_service.dart';
@@ -34,6 +35,9 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
   int? _kirakiraRemainingTime; // 残り時間（秒）
   Timer? _remainingTimeTimer; // 残り時間更新用タイマー
 
+  // 捧げる条件関連
+  bool _canOfferCurrently = false; // 現在捧げられる状態かどうか
+
   // SharedPreferencesのキー
   static const String _keyIsMonitoring = 'step_monitoring_active';
   static const String _keyStartSteps = 'step_monitoring_start';
@@ -43,9 +47,12 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
     super.initState();
     _loadMonitoringState();
     loadKirakiraLevel();
+    fixKirakiraLevelIfExceedsMax(); // レベルが2を超えていたら修正
     _startPedometer();
     _loadUserSymbols();
     _startRemainingTimeUpdate();
+    // 初回の条件チェック
+    _checkOfferConditions();
   }
 
   @override
@@ -113,6 +120,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
       _currentSymbolIndex = (_currentSymbolIndex + 1) % _userSymbols.length;
     });
     _updateRemainingTime(); // シンボル変更時に残り時間も更新
+    _checkOfferConditions(); // シンボル変更時に条件をチェック
   }
 
   // 前のシンボルに切り替え
@@ -123,6 +131,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
           (_currentSymbolIndex - 1 + _userSymbols.length) % _userSymbols.length;
     });
     _updateRemainingTime(); // シンボル変更時に残り時間も更新
+    _checkOfferConditions(); // シンボル変更時に条件をチェック
   }
 
   // 現在のシンボル
@@ -170,6 +179,8 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
             UserStorage.saveDisplaySteps(_displaySteps);
           }
         });
+        // 歩数更新時に条件をチェック
+        _checkOfferConditions();
       },
       onError: (error) {
         setState(() {
@@ -304,13 +315,13 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
                     // 左：ポイントを捧げるボタン
                     Expanded(
                       child: GestureDetector(
-                        onTap: _canOfferPoints() ? _handleOfferPoints : null,
+                        onTap: _handleOfferPoints,
                         child: Container(
                           height: screenHeight * 0.09,
                           decoration: BoxDecoration(
-                            color: _canOfferPoints()
-                                ? const Color(0xFFF0F337)
-                                : const Color(0xFFB0B4CF),
+                            color: _canOfferCurrently
+                                ? const Color(0xFFF0F337) // 黄色
+                                : const Color(0xFFB0B4CF), // 薄い青（グレーブルー）
                             borderRadius: BorderRadius.circular(
                               screenHeight * 0.045,
                             ),
@@ -467,22 +478,171 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
     );
   }
 
-  // ポイントを捧げるボタンが有効かどうかを判定
-  bool _canOfferPoints() {
-    // キラキラレベル0のとき：1000歩以上
+  // 捧げる条件を定期的にチェック（UIの色変更用、エラーメッセージなし）
+  Future<void> _checkOfferConditions() async {
+    if (!_isMonitoring) {
+      setState(() {
+        _canOfferCurrently = false;
+      });
+      return;
+    }
+
+    // キラキラレベルが既にMAX（2）の場合は捧げられない
+    if (kirakiraLevel >= 2) {
+      setState(() {
+        _canOfferCurrently = false;
+      });
+      return;
+    }
+
+    // 歩数条件チェック
+    bool stepsOk = false;
     if (kirakiraLevel == 0 && _displaySteps >= 1000) {
-      return true;
+      stepsOk = true;
+    } else if (kirakiraLevel == 1 && _displaySteps >= 4000) {
+      stepsOk = true;
     }
-    // キラキラレベル1のとき：4000歩以上
-    if (kirakiraLevel == 1 && _displaySteps >= 4000) {
-      return true;
+
+    if (!stepsOk) {
+      setState(() {
+        _canOfferCurrently = false;
+      });
+      return;
     }
-    return false;
+
+    // シンボルが存在するか
+    final currentSymbol = _currentSymbol;
+    if (currentSymbol == null) {
+      setState(() {
+        _canOfferCurrently = false;
+      });
+      return;
+    }
+
+    // 距離条件チェック
+    try {
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _canOfferCurrently = false;
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      final distance = Geolocator.distanceBetween(
+        currentSymbol.symbolYCoord,
+        currentSymbol.symbolXCoord,
+        position.latitude,
+        position.longitude,
+      );
+
+      setState(() {
+        _canOfferCurrently = distance <= 30.0;
+      });
+    } catch (e) {
+      setState(() {
+        _canOfferCurrently = false;
+      });
+    }
+  }
+
+  // ポイントを捧げるボタンが有効かどうかを判定（タップ時の詳細チェック、エラーメッセージあり）
+  Future<bool> _canOfferPoints() async {
+    // キラキラレベルが既にMAX（2）の場合は捧げられない
+    if (kirakiraLevel >= 2) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('レベルがMAXです')));
+      }
+      return false;
+    }
+
+    // 歩数条件チェック
+    if (kirakiraLevel == 0 && _displaySteps < 1000) {
+      return false;
+    }
+    if (kirakiraLevel == 1 && _displaySteps < 4000) {
+      return false;
+    }
+
+    // 距離条件チェック（30m以内）
+    final currentSymbol = _currentSymbol;
+    if (currentSymbol == null) {
+      return false;
+    }
+
+    try {
+      // 位置情報の権限チェック
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('位置情報の権限が必要です')));
+          }
+          return false;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('設定から位置情報の権限を許可してください')));
+        }
+        return false;
+      }
+
+      // 現在位置を取得
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // シンボルとの距離を計算（メートル単位）
+      final distance = Geolocator.distanceBetween(
+        currentSymbol.symbolYCoord, // 緯度
+        currentSymbol.symbolXCoord, // 経度
+        position.latitude,
+        position.longitude,
+      );
+
+      // 30m以内かチェック
+      if (distance > 30.0) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'シンボルから${distance.toStringAsFixed(0)}m離れています。30m以内に近づいてください',
+              ),
+            ),
+          );
+        }
+        return false;
+      }
+
+      return true;
+    } catch (e) {
+      debugPrint('位置情報の取得に失敗: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('位置情報の取得に失敗しました: $e')));
+      }
+      return false;
+    }
   }
 
   // ポイントを捧げる処理
   Future<void> _handleOfferPoints() async {
-    if (!_canOfferPoints()) return;
+    if (!await _canOfferPoints()) return;
 
     try {
       // キラキラレベルを+1

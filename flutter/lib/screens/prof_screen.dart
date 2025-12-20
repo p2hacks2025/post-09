@@ -4,6 +4,8 @@ import '../base/base_kirakira.dart';
 import '../services/api_service.dart';
 import '../services/user_storage.dart';
 import '../models/user.dart';
+import 'prof_screen_dialogs.dart';
+import 'prof_screen_widgets.dart';
 
 /// プロフィール画面
 class ProfScreen extends StatefulWidget {
@@ -25,6 +27,7 @@ class _ProfScreenState extends State<ProfScreen> with KirakiraLevelMixin {
     _loadUser();
     _loadTotalSteps();
     loadKirakiraLevel();
+    fixKirakiraLevelIfExceedsMax(); // レベルが2を超えていたら修正
   }
 
   Future<void> _loadUser() async {
@@ -89,9 +92,13 @@ class _ProfScreenState extends State<ProfScreen> with KirakiraLevelMixin {
     }
   }
 
+  // データ再読み込み
+  Future<void> _reloadData() async {
+    await _loadUser();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
     return BaseLayout(
@@ -103,47 +110,47 @@ class _ProfScreenState extends State<ProfScreen> with KirakiraLevelMixin {
             children: [
               const Spacer(),
 
-              // 緑色の長方形
-              _buildProfileCard(context),
+              // プロフィールカード
+              ProfScreenWidgets.buildProfileCard(
+                context,
+                isLoading: _isLoading,
+                user: _user,
+                totalSteps: _totalSteps,
+                kirakiraLevel: kirakiraLevel,
+              ),
 
               const Spacer(),
 
               // 編集項目
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () => _showEditNameDialog(context),
-                      child: _buildSquareItem(
-                        context,
-                        'ニックネーム変更',
-                        assetPath: 'assets/images/icon_name.png',
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.08),
-                    GestureDetector(
-                      onTap: () => _showEditHeightDialog(context),
-                      child: _buildSquareItem(
-                        context,
-                        '身長変更',
-                        assetPath: 'assets/images/icon_height.png',
-                        imageFit: BoxFit.contain,
-                        imageAlignment: Alignment(0, 0.2),
-                      ),
-                    ),
-                    SizedBox(height: screenHeight * 0.08),
-                    GestureDetector(
-                      onTap: () => _showEditWeightDialog(context),
-                      child: _buildSquareItem(
-                        context,
-                        '体重変更',
-                        assetPath: 'assets/images/icon_weight.png',
-                      ),
-                    ),
-                  ],
-                ),
+              ProfScreenWidgets.buildEditItems(
+                context,
+                onNameTap: () {
+                  if (_user != null) {
+                    ProfScreenDialogs.showEditNameDialog(
+                      context,
+                      _user!,
+                      _reloadData,
+                    );
+                  }
+                },
+                onHeightTap: () {
+                  if (_user != null) {
+                    ProfScreenDialogs.showEditHeightDialog(
+                      context,
+                      _user!,
+                      _reloadData,
+                    );
+                  }
+                },
+                onWeightTap: () {
+                  if (_user != null) {
+                    ProfScreenDialogs.showEditWeightDialog(
+                      context,
+                      _user!,
+                      _reloadData,
+                    );
+                  }
+                },
               ),
 
               const Spacer(),
@@ -151,329 +158,6 @@ class _ProfScreenState extends State<ProfScreen> with KirakiraLevelMixin {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildProfileCard(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
-    return Container(
-      width: double.infinity,
-      height: screenHeight * 0.33,
-      decoration: BoxDecoration(
-        color: const Color(0xFF368855),
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Stack(
-        children: [
-          // テキスト（左）
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 40),
-              child: _isLoading
-                  ? const Text(
-                      "読み込み中...",
-                      style: TextStyle(
-                        color: Color(0xFFF0F337),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : Text(
-                      _user != null ? "${_user!.name}" : "ゲスト",
-                      style: const TextStyle(
-                        color: Color(0xFFF0F337),
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-            ),
-          ),
-          // 画像（右下）
-          Positioned(
-            right: -screenWidth * 0.08,
-            bottom: -screenWidth * 0.08,
-            child: Image.asset(
-              'assets/images/symbol&back/symbol_lv$kirakiraLevel.png',
-              width: screenWidth * 0.4,
-              height: screenWidth * 0.4,
-              errorBuilder: (context, error, stackTrace) {
-                return SizedBox(
-                  width: screenWidth * 0.4,
-                  height: screenWidth * 0.4,
-                  child: const Icon(Icons.image, color: Color(0xFFF0F337)),
-                );
-              },
-            ),
-          ),
-          // 累計歩数テキスト（左下）
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 40, bottom: 16),
-              child: Text(
-                _totalSteps != null ? '累計歩数：$_totalSteps pow' : '累計歩数：--- pow',
-                style: const TextStyle(
-                  color: Color(0xFFF0F337),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ニックネーム変更ダイアログ
-  void _showEditNameDialog(BuildContext context) {
-    if (_user == null) return;
-
-    final controller = TextEditingController(text: _user!.name);
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ニックネーム変更'),
-        content: TextField(
-          controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'ニックネーム',
-            hintText: 'ここに文字を入力',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (controller.text.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('ニックネームを入力してください')),
-                );
-                return;
-              }
-
-              try {
-                await ApiService.updateUser(
-                  uuid: _user!.uuid,
-                  name: controller.text,
-                );
-
-                if (mounted) {
-                  Navigator.pop(context);
-                  await _loadUser();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ニックネームを更新しました')),
-                  );
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('更新に失敗しました: $e')));
-                }
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 身長変更ダイアログ
-  void _showEditHeightDialog(BuildContext context) {
-    if (_user == null) return;
-
-    int selectedHeight = _user!.length;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('身長変更'),
-        content: StatefulBuilder(
-          builder: (context, setState) {
-            return DropdownButton<int>(
-              value: selectedHeight,
-              isExpanded: true,
-              items: List.generate(121, (index) => 100 + index).map((height) {
-                return DropdownMenuItem<int>(
-                  value: height,
-                  child: Text('$height cm'),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    selectedHeight = value;
-                  });
-                }
-              },
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await ApiService.updateUser(
-                  uuid: _user!.uuid,
-                  length: selectedHeight,
-                );
-
-                if (mounted) {
-                  Navigator.pop(context);
-                  await _loadUser();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('身長を更新しました')));
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('更新に失敗しました: $e')));
-                }
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 体重変更ダイアログ
-  void _showEditWeightDialog(BuildContext context) {
-    if (_user == null) return;
-
-    int selectedWeight = _user!.weight;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('体重変更'),
-        content: StatefulBuilder(
-          builder: (context, setState) {
-            return DropdownButton<int>(
-              value: selectedWeight,
-              isExpanded: true,
-              items: List.generate(121, (index) => 30 + index).map((weight) {
-                return DropdownMenuItem<int>(
-                  value: weight,
-                  child: Text('$weight kg'),
-                );
-              }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    selectedWeight = value;
-                  });
-                }
-              },
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('キャンセル'),
-          ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await ApiService.updateUser(
-                  uuid: _user!.uuid,
-                  weight: selectedWeight,
-                );
-
-                if (mounted) {
-                  Navigator.pop(context);
-                  await _loadUser();
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('体重を更新しました')));
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('更新に失敗しました: $e')));
-                }
-              }
-            },
-            child: const Text('保存'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // 小さな正方形
-  Widget _buildSquareItem(
-    BuildContext context,
-    String label, {
-    String? assetPath,
-    BoxFit imageFit = BoxFit.cover,
-    AlignmentGeometry imageAlignment = Alignment.center,
-  }) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final squareSize = screenWidth * 0.1;
-
-    return Row(
-      children: [
-        if (assetPath == null)
-          Container(
-            width: squareSize,
-            height: squareSize,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-            ),
-          )
-        else
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              assetPath,
-              width: squareSize,
-              height: squareSize,
-              fit: imageFit,
-              alignment: imageAlignment,
-              color: Colors.white,
-              colorBlendMode: BlendMode.srcIn,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: squareSize,
-                  height: squareSize,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                );
-              },
-            ),
-          ),
-        SizedBox(width: screenWidth * 0.04),
-        Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }

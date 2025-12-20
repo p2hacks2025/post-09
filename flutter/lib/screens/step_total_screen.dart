@@ -23,6 +23,7 @@ class _StepTotalScreenState extends State<StepTotalScreen>
     super.initState();
     _loadTotalSteps();
     loadKirakiraLevel();
+    fixKirakiraLevelIfExceedsMax(); // レベルが2を超えていたら修正
   }
 
   // 累計歩数を取得
