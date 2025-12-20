@@ -26,13 +26,13 @@ class _SettingScreenState extends State<SettingScreen> {
       title: '設定',
       showBackButton: false,
       showTopStepCounter: false,
-      child: SingleChildScrollView(
+      child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
 
               // サウンド設定
               _buildSettingSection(
@@ -68,7 +68,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ],
               ),
 
-              SizedBox(height: screenHeight * 0.04),
+              const Spacer(),
 
               // 初期化設定
               _buildSettingSection(
@@ -102,7 +102,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ],
               ),
 
-              SizedBox(height: screenHeight * 0.04),
+              const Spacer(),
 
               // インフル・コロナ設定
               _buildSettingSection(
@@ -120,7 +120,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       ),
                     ),
                     child: const Text(
-                      'このボタンを押した場合、期限が一週間伸びます\nインフル・コロナ時のみ押してください',
+                      'このボタンを押した場合、期限が一週間伸びます\nインフル・コロナに罹患した時のみ押してください',
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
@@ -157,7 +157,9 @@ class _SettingScreenState extends State<SettingScreen> {
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('次回スタート時に+${totalBonus}歩されます'),
+                                content: Text(
+                                  '次回スタート時に+${totalBonus}歩されます\nお大事に！',
+                                ),
                               ),
                             );
                           }
@@ -174,7 +176,7 @@ class _SettingScreenState extends State<SettingScreen> {
                 ],
               ),
 
-              SizedBox(height: screenHeight * 0.06),
+              const Spacer(),
             ],
           ),
         ),
