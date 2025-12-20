@@ -136,30 +136,29 @@ class _SettingScreenState extends State<SettingScreen> {
                         debugPrint('期限を一週間伸ばすボタンが押されました');
 
                         try {
-                          // ユーザーUUIDを取得
-                          final userUuid = await UserStorage.getUserUuid();
-                          if (userUuid == null) {
+                          // 計測中かどうかを確認
+                          final displaySteps =
+                              await UserStorage.getDisplaySteps();
+
+                          if (displaySteps != null) {
+                            // 計測中（スタート押下後）
                             if (mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('ユーザーが登録されていません')),
+                                const SnackBar(content: Text('計測中です')),
                               );
                             }
                             return;
                           }
 
-                          // 1000歩を追加するステップレコードを作成
-                          final request = StepCreateRequest(
-                            userUuid: userUuid,
-                            step: 1000,
-                            isStarted: false,
-                            createdAt: DateTime.now(),
-                          );
-
-                          await ApiService.createStep(request);
+                          // ゴール押下後：次回スタート時の追加歩数を+1000
+                          await UserStorage.addBonusSteps();
+                          final totalBonus = await UserStorage.getBonusSteps();
 
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('累計歩数を+1000しました！')),
+                              SnackBar(
+                                content: Text('次回スタート時に+${totalBonus}歩されます'),
+                              ),
                             );
                           }
                         } catch (e) {

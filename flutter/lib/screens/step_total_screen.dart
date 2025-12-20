@@ -17,7 +17,6 @@ class _StepTotalScreenState extends State<StepTotalScreen>
   int? _totalSteps; // 累計歩数
   bool _isLoading = true;
   String? _error;
-  bool _isProcessing = false; // 処理中フラグ
 
   @override
   void initState() {
@@ -79,11 +78,6 @@ class _StepTotalScreenState extends State<StepTotalScreen>
 
               // 緑色のカード
               _buildStepCard(context),
-
-              const Spacer(),
-
-              // 黄色いボタン
-              _buildSubmitButton(context),
 
               const Spacer(),
             ],
@@ -161,67 +155,5 @@ class _StepTotalScreenState extends State<StepTotalScreen>
         ],
       ),
     );
-  }
-
-  // ポイントをシンボルに捧げるボタン
-  Widget _buildSubmitButton(BuildContext context) {
-    // ボタンの有効/無効を判定
-    bool canLevelUp = false;
-    String buttonText = 'ポイントをシンボルに捧げる';
-
-    if (_totalSteps != null && !_isProcessing) {
-      if (kirakiraLevel == 0 && _totalSteps! >= 1000) {
-        canLevelUp = true;
-      } else if (kirakiraLevel == 1 && _totalSteps! >= 3000) {
-        canLevelUp = true;
-      }
-    }
-
-    return GestureDetector(
-      onTap: canLevelUp ? _handleLevelUp : null,
-      child: Container(
-        width: double.infinity,
-        height: 60,
-        decoration: BoxDecoration(
-          color: canLevelUp
-              ? const Color(0xFFF0F337) // 黄色
-              : Colors.grey, // 無効時は灰色
-          borderRadius: BorderRadius.circular(30),
-        ),
-        child: Center(
-          child: _isProcessing
-              ? const CircularProgressIndicator(color: Colors.black)
-              : Text(
-                  buttonText,
-                  style: TextStyle(
-                    color: canLevelUp ? Colors.black : Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-      ),
-    );
-  }
-
-  // キラキラレベルを上げる処理
-  Future<void> _handleLevelUp() async {
-    if (_isProcessing) return;
-
-    setState(() {
-      _isProcessing = true;
-    });
-
-    try {
-      await incrementAndSyncKirakiraLevel();
-    } catch (e) {
-      // エラーハンドリングはincrementAndSyncKirakiraLevel内で行われる
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
-    }
   }
 }

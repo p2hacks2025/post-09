@@ -7,6 +7,7 @@ import '../base/base_kirakira.dart';
 import '../services/api_service.dart';
 import '../services/user_storage.dart';
 import '../models/step.dart';
+import '../models/symbol.dart';
 
 // シンボル画面
 class SymbolScreen extends StatefulWidget {
@@ -24,6 +25,15 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
   int _displaySteps = 0; // 画面に表示する歩数（計測中の差分）
   Key _refreshKey = UniqueKey(); // リロード用のキー
 
+  // シンボル関連
+  List<Symbol> _userSymbols = []; // ユーザーのシンボルリスト
+  int _currentSymbolIndex = 0; // 現在表示中のシンボルインデックス
+  bool _isLoadingSymbols = true; // シンボル読み込み中フラグ
+
+  // キラキラ残り時間関連
+  int? _kirakiraRemainingTime; // 残り時間（秒）
+  Timer? _remainingTimeTimer; // 残り時間更新用タイマー
+
   // SharedPreferencesのキー
   static const String _keyIsMonitoring = 'step_monitoring_active';
   static const String _keyStartSteps = 'step_monitoring_start';
@@ -34,11 +44,14 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
     _loadMonitoringState();
     loadKirakiraLevel();
     _startPedometer();
+    _loadUserSymbols();
+    _startRemainingTimeUpdate();
   }
 
   @override
   void dispose() {
     _stepSub?.cancel();
+    _remainingTimeTimer?.cancel();
     super.dispose();
   }
 
@@ -64,6 +77,84 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
       await prefs.setInt(_keyStartSteps, _startSteps!);
     } else {
       await prefs.remove(_keyStartSteps);
+    }
+  }
+
+  // ユーザーのシンボルリストを読み込み
+  Future<void> _loadUserSymbols() async {
+    try {
+      final userUuid = await UserStorage.getUserUuid();
+      if (userUuid == null) {
+        setState(() {
+          _isLoadingSymbols = false;
+        });
+        return;
+      }
+
+      final userSymbols = await ApiService.getSymbolsByUser(userUuid: userUuid);
+      setState(() {
+        _userSymbols = userSymbols.symbols;
+        _isLoadingSymbols = false;
+      });
+      // シンボルがロードされた後に残り時間を取得
+      _updateRemainingTime();
+    } catch (e) {
+      debugPrint('シンボルの読み込みに失敗: $e');
+      setState(() {
+        _isLoadingSymbols = false;
+      });
+    }
+  }
+
+  // 次のシンボルに切り替え
+  void _showNextSymbol() {
+    if (_userSymbols.isEmpty) return;
+    setState(() {
+      _currentSymbolIndex = (_currentSymbolIndex + 1) % _userSymbols.length;
+    });
+    _updateRemainingTime(); // シンボル変更時に残り時間も更新
+  }
+
+  // 前のシンボルに切り替え
+  void _showPreviousSymbol() {
+    if (_userSymbols.isEmpty) return;
+    setState(() {
+      _currentSymbolIndex =
+          (_currentSymbolIndex - 1 + _userSymbols.length) % _userSymbols.length;
+    });
+    _updateRemainingTime(); // シンボル変更時に残り時間も更新
+  }
+
+  // 現在のシンボル
+  Symbol? get _currentSymbol {
+    if (_userSymbols.isEmpty) return null;
+    return _userSymbols[_currentSymbolIndex];
+  }
+
+  // 残り時間の定期更新を開始
+  void _startRemainingTimeUpdate() {
+    _updateRemainingTime();
+    _remainingTimeTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _updateRemainingTime();
+    });
+  }
+
+  // 残り時間を取得して更新
+  Future<void> _updateRemainingTime() async {
+    final currentSymbol = _currentSymbol;
+    if (currentSymbol == null) return;
+
+    try {
+      final remainingTime = await ApiService.getKirakiraRemainingTime(
+        currentSymbol.uuid,
+      );
+      if (mounted) {
+        setState(() {
+          _kirakiraRemainingTime = remainingTime;
+        });
+      }
+    } catch (e) {
+      debugPrint('残り時間の取得に失敗: $e');
     }
   }
 
@@ -93,9 +184,15 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // 表示するキラキラレベル（現在のシンボルがあればそのレベル、なければデフォルト）
+    final displayKirakiraLevel = _currentSymbol?.kirakiraLevel ?? kirakiraLevel;
+
     return BaseLayout(
       showBackButton: false,
       showTopStepCounter: false,
+      customTopLeftWidget: _kirakiraRemainingTime != null
+          ? _buildRemainingTimeWidget(screenWidth)
+          : null,
       child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
@@ -103,105 +200,188 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
             children: [
               const Spacer(),
 
-              // シンボル表示エリア
-              Container(
-                key: _refreshKey,
-                height: screenHeight * 0.6,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(32),
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // 背景画像
-                    Image.asset(
-                      'assets/images/symbol&back/back_lv$kirakiraLevel.png',
-                      fit: BoxFit.cover,
-                    ),
-                    // シンボル画像
-                    Padding(
-                      padding: const EdgeInsets.all(1),
-                      child: Column(
-                        children: [
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.all(1),
-                              child: Center(
-                                child: Image.asset(
-                                  'assets/images/symbol&back/symbol_lv$kirakiraLevel.png',
-                                  fit: BoxFit.contain,
+              // インジケーターとシンボル名を上部に表示
+              if (!_isLoadingSymbols && _userSymbols.isNotEmpty)
+                _buildSymbolIndicatorAndName(screenWidth),
+
+              const SizedBox(height: 16),
+
+              // シンボル表示エリア（背景サイズを少し小さく）
+              GestureDetector(
+                onHorizontalDragEnd: (details) {
+                  // フリック（スワイプ）の検出
+                  if (details.primaryVelocity != null) {
+                    if (details.primaryVelocity! > 0) {
+                      // 右スワイプ（前のシンボル）
+                      _showPreviousSymbol();
+                    } else if (details.primaryVelocity! < 0) {
+                      // 左スワイプ（次のシンボル）
+                      _showNextSymbol();
+                    }
+                  }
+                },
+                child: Container(
+                  key: _refreshKey,
+                  height: screenHeight * 0.52, // 背景サイズを若干小さく（0.6 -> 0.52）
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // 背景画像
+                      Image.asset(
+                        'assets/images/symbol&back/back_lv$displayKirakiraLevel.png',
+                        fit: BoxFit.cover,
+                      ),
+                      // シンボル画像
+                      Padding(
+                        padding: const EdgeInsets.all(1),
+                        child: Column(
+                          children: [
+                            Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.all(1),
+                                child: Center(
+                                  child: Image.asset(
+                                    'assets/images/symbol&back/symbol_lv$displayKirakiraLevel.png',
+                                    fit: BoxFit.contain,
+                                  ),
                                 ),
                               ),
                             ),
+                            _buildStepCounter(screenWidth),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                      // リロードボタン（右上）
+                      Positioned(
+                        top: 16,
+                        right: 16,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () {
+                              // ページを再読み込み（ページ自体を置き換え）
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SymbolScreen(),
+                                ),
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(24),
+                            child: Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.rotate_left,
+                                color: Colors.black,
+                                size: 28,
+                              ),
+                            ),
                           ),
-                          _buildStepCounter(screenWidth),
-                          const SizedBox(height: 8),
-                        ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const Spacer(),
+
+              // 下部のボタン（スタート時は1つ、計測中は2つ）
+              if (_isMonitoring)
+                // 計測中：「ポイントを捧げる」と「ゴール」の2つのボタン
+                Row(
+                  children: [
+                    // 左：ポイントを捧げるボタン
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _canOfferPoints() ? _handleOfferPoints : null,
+                        child: Container(
+                          height: screenHeight * 0.09,
+                          decoration: BoxDecoration(
+                            color: _canOfferPoints()
+                                ? const Color(0xFFF0F337)
+                                : const Color(0xFFB0B4CF),
+                            borderRadius: BorderRadius.circular(
+                              screenHeight * 0.045,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'ポイントを捧げる',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.035,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    // リロードボタン（右上）
-                    Positioned(
-                      top: 16,
-                      right: 16,
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          onTap: () {
-                            // ページを再読み込み（ページ自体を置き換え）
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SymbolScreen(),
-                              ),
-                            );
-                          },
-                          borderRadius: BorderRadius.circular(24),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              shape: BoxShape.circle,
+                    SizedBox(width: screenWidth * 0.03),
+                    // 右：ゴールボタン
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _handleStop,
+                        child: Container(
+                          height: screenHeight * 0.09,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0F337),
+                            borderRadius: BorderRadius.circular(
+                              screenHeight * 0.035,
                             ),
-                            child: const Icon(
-                              Icons.rotate_left,
-                              color: Colors.black,
-                              size: 28,
+                          ),
+                          child: Center(
+                            child: Text(
+                              'ゴール',
+                              style: TextStyle(
+                                fontSize: screenWidth * 0.05,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 1,
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              const Spacer(),
-
-              // 下部のスタート/ストップボタン
-              GestureDetector(
-                onTap: _isMonitoring ? _handleStop : _handleStart,
-                child: Container(
-                  width: double.infinity,
-                  height: screenHeight * 0.09,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F337),
-                    borderRadius: BorderRadius.circular(screenHeight * 0.045),
-                  ),
-                  child: Center(
-                    child: Text(
-                      _isMonitoring ? 'ストップ' : 'スタート',
-                      style: TextStyle(
-                        fontSize: screenWidth * 0.05,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                        letterSpacing: 1,
+                )
+              else
+                // スタート前：スタートボタン
+                GestureDetector(
+                  onTap: _handleStart,
+                  child: Container(
+                    width: double.infinity,
+                    height: screenHeight * 0.09,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0F337),
+                      borderRadius: BorderRadius.circular(screenHeight * 0.045),
+                    ),
+                    child: Center(
+                      child: Text(
+                        'スタート',
+                        style: TextStyle(
+                          fontSize: screenWidth * 0.05,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                          letterSpacing: 1,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
 
               const Spacer(),
             ],
@@ -209,6 +389,121 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
         ),
       ),
     );
+  }
+
+  // インジケーターとシンボル名を表示するウィジェット
+  Widget _buildSymbolIndicatorAndName(double screenWidth) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      child: Column(
+        children: [
+          // インジケーター（小さい丸）
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_userSymbols.length, (index) {
+              final isActive = index == _currentSymbolIndex;
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                width: isActive ? 10 : 8,
+                height: isActive ? 10 : 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isActive
+                      ? const Color(0xFFF0F337) // 黄色
+                      : const Color(0xFFB0B4CF), // グレーブルー
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 12),
+          // シンボル名
+          Text(
+            _currentSymbol?.symbolName ?? '---',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  // キラキラ残り時間を表示するウィジェット
+  Widget _buildRemainingTimeWidget(double screenWidth) {
+    final iconSize = screenWidth * 0.12;
+
+    // APIから返される値は既に時間単位（int型）なので、そのまま表示
+    final timeText = '$_kirakiraRemainingTime 時間';
+
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: iconSize * 0.3,
+        vertical: iconSize * 0.2,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(iconSize * 0.3),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 時計アイコン（赤色、外周が矢印）
+          Icon(Icons.update, color: Colors.red, size: iconSize * 0.6),
+          SizedBox(width: iconSize * 0.16),
+          // 残り時間テキスト
+          Text(
+            timeText,
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: iconSize * 0.32,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ポイントを捧げるボタンが有効かどうかを判定
+  bool _canOfferPoints() {
+    // キラキラレベル0のとき：1000歩以上
+    if (kirakiraLevel == 0 && _displaySteps >= 1000) {
+      return true;
+    }
+    // キラキラレベル1のとき：4000歩以上
+    if (kirakiraLevel == 1 && _displaySteps >= 4000) {
+      return true;
+    }
+    return false;
+  }
+
+  // ポイントを捧げる処理
+  Future<void> _handleOfferPoints() async {
+    if (!_canOfferPoints()) return;
+
+    try {
+      // キラキラレベルを+1
+      final newLevel = kirakiraLevel + 1;
+      await syncKirakiraLevelToServer(level: newLevel);
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('キラキラレベルが${newLevel}に上がりました！')));
+      }
+
+      // UIを更新
+      setState(() {});
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('レベルアップに失敗しました: $e')));
+      }
+    }
   }
 
   Future<void> _handleStart() async {
@@ -219,16 +514,28 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
       return;
     }
 
+    // 追加歩数（ボーナス歩数）を取得
+    final bonusSteps = await UserStorage.getBonusSteps();
+
     setState(() {
       _isMonitoring = true;
       _startSteps = _currentSteps;
-      _displaySteps = 0; // 計測開始時は0にリセット
+      _displaySteps = bonusSteps; // 追加歩数から開始
     });
 
     // 状態を保存
     await _saveMonitoringState();
-    // 表示歩数を0で保存
-    await UserStorage.saveDisplaySteps(0);
+    // 表示歩数を追加歩数で保存
+    await UserStorage.saveDisplaySteps(bonusSteps);
+    // 追加歩数をクリア（使用済み）
+    await UserStorage.clearBonusSteps();
+
+    // 追加歩数があった場合は通知
+    if (bonusSteps > 0 && mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('ボーナス歩数+${bonusSteps}が適用されました！')));
+    }
   }
 
   Future<void> _handleStop() async {
