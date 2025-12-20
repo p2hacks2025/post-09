@@ -202,8 +202,8 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
       showBackButton: false,
       showTopStepCounter: false,
       customTopLeftWidget: _kirakiraRemainingTime != null
-          ? _buildRemainingTimeWidget(screenWidth)
-          : null,
+           ? _buildRemainingTimeWidget(screenWidth)
+           : null,
       child: SizedBox.expand(
         child: Padding(
           padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.06),
@@ -215,7 +215,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
               if (!_isLoadingSymbols && _userSymbols.isNotEmpty)
                 _buildSymbolIndicatorAndName(screenWidth),
 
-              const SizedBox(height: 16),
+              const Spacer(),
 
               // シンボル表示エリア（背景サイズを少し小さく）
               GestureDetector(
@@ -322,9 +322,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
                             color: _canOfferCurrently
                                 ? const Color(0xFFF0F337) // 黄色
                                 : const Color(0xFFB0B4CF), // 薄い青（グレーブルー）
-                            borderRadius: BorderRadius.circular(
-                              screenHeight * 0.045,
-                            ),
+                            borderRadius: BorderRadius.circular(32),
                           ),
                           child: Center(
                             child: Text(
@@ -340,7 +338,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
                         ),
                       ),
                     ),
-                    SizedBox(width: screenWidth * 0.03),
+                    const SizedBox(width: 16),
                     // 右：ゴールボタン
                     Expanded(
                       child: GestureDetector(
@@ -349,9 +347,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
                           height: screenHeight * 0.09,
                           decoration: BoxDecoration(
                             color: const Color(0xFFF0F337),
-                            borderRadius: BorderRadius.circular(
-                              screenHeight * 0.035,
-                            ),
+                            borderRadius: BorderRadius.circular(32),
                           ),
                           child: Center(
                             child: Text(
@@ -378,7 +374,7 @@ class _SymbolScreenState extends State<SymbolScreen> with KirakiraLevelMixin {
                     height: screenHeight * 0.09,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF0F337),
-                      borderRadius: BorderRadius.circular(screenHeight * 0.045),
+                      borderRadius: BorderRadius.circular(32),
                     ),
                     child: Center(
                       child: Text(

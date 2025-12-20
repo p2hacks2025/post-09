@@ -102,6 +102,7 @@ class _BaseLayoutState extends State<BaseLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: const Color(0xFF1A1851), // ダークブルー背景
       body: SafeArea(
         child: Column(
